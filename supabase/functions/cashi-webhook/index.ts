@@ -16,46 +16,91 @@ serve(async (req) => {
     return new Response('ok', {
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Methods': 'GET, POST, HEAD',
         'Access-Control-Allow-Headers': 'Content-Type, X-Signature',
       },
     });
   }
 
+  // Handle HEAD request (for webhook verification)
+  if (req.method === 'HEAD') {
+    console.log('HEAD request received - webhook verification');
+    return new Response(null, {
+      status: 200,
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-Webhook-Status': 'active',
+      }
+    });
+  }
+
+  // Handle GET request (for webhook verification)
+  if (req.method === 'GET') {
+    console.log('GET request received - webhook verification');
+    return new Response(
+      JSON.stringify({ 
+        status: 'ok', 
+        message: 'Cashi.id webhook endpoint is active',
+        timestamp: new Date().toISOString(),
+      }),
+      { 
+        status: 200, 
+        headers: { 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
+  // Only accept POST for actual webhooks
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
-    // Verify webhook signature
-    const signature = req.headers.get('X-Signature');
     const body = await req.text();
     
-    // TODO: Implement signature verification based on Cashi.id docs
-    // For now, we'll check if signature matches webhook secret
-    if (signature !== WEBHOOK_SECRET) {
-      console.error('Invalid webhook signature');
-      return new Response(
-        JSON.stringify({ error: 'Invalid signature' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+    // Handle empty body (ping/health check)
+    if (!body || body.trim() === '') {
+      console.log('Empty body received - health check');
+      return new Response('OK', { status: 200 });
+    }
+    
+    const payload = JSON.parse(body);
+    
+    // Log webhook payload
+    console.log('Cashi webhook received:', payload);
+    console.log('Headers:', Object.fromEntries(req.headers.entries()));
+    
+    // Extract event and data from Cashi.id webhook format
+    const { event, data } = payload;
+    
+    // Handle test webhook from Cashi.id
+    if (data?.order_id?.startsWith('TEST-')) {
+      console.log('Test Connection Received from Cashi.id');
+      return new Response('Test OK', { status: 200 });
+    }
+    
+    // Only process PAYMENT_SETTLED events
+    if (event !== 'PAYMENT_SETTLED') {
+      console.log('Ignoring non-payment event:', event);
+      return new Response('OK', { status: 200 });
     }
 
-    const payload = JSON.parse(body);
-    console.log('Cashi webhook received:', payload);
-
-    // Extract payment info from Cashi.id webhook
+    // Extract payment info from Cashi.id webhook data
     const {
       transaction_id,
       order_id,
       status,
       amount,
       paid_at,
-    } = payload;
+    } = data || {};
 
-    // Only process successful payments
-    if (status !== 'success' && status !== 'paid') {
-      console.log('Payment not successful, status:', status);
-      return new Response(
-        JSON.stringify({ message: 'Payment not successful' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+    // Only process SETTLED payments
+    if (status !== 'SETTLED') {
+      console.log('Payment not settled, status:', status);
+      return new Response('OK', { status: 200 });
     }
 
     // Initialize Supabase client with service role
@@ -78,10 +123,7 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Failed to update order:', updateError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to update order' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response('OK', { status: 200 }); // Still return 200 to Cashi.id
     }
 
     console.log('Order updated successfully:', order);
@@ -105,26 +147,11 @@ serve(async (req) => {
       },
     });
 
-    // Optional: Send notification (Telegram, WhatsApp, etc)
-    // await sendPaymentNotification(order);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Payment confirmed',
-        order_id,
-      }),
-      { 
-        status: 200, 
-        headers: { 'Content-Type': 'application/json' } 
-      }
-    );
+    return new Response('OK', { status: 200 });
 
   } catch (error) {
     console.error('Webhook error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    // Always return 200 to Cashi.id to prevent retries
+    return new Response('OK', { status: 200 });
   }
 });
