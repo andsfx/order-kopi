@@ -26,8 +26,10 @@ export function useStoreStatus() {
   function isOpen() {
     if (loading || !settings) return true; // Default open while loading
 
-    // Manual override
-    if (settings.is_open === 'false') return false;
+    // Manual override - handle both boolean and string
+    const manualOverride = settings.is_open;
+    if (manualOverride === false || manualOverride === 'false') return false;
+    if (manualOverride === true || manualOverride === 'true') return true;
 
     const openHour = settings.open_hour || '07:00';
     const closeHour = settings.close_hour || '22:00';
