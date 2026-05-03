@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, User, MessageSquare, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, User, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
 import { useCart } from '../lib/CartContext';
 import { useOrders } from '../lib/OrderContext';
 import { useStoreStatus } from '../lib/useStoreStatus';
+import { checkRateLimit, formatTimeRemaining } from '../lib/rateLimit';
 
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
@@ -32,6 +33,14 @@ export default function Checkout() {
 
     if (!name.trim()) {
       setError('Nama wajib diisi');
+      return;
+    }
+
+    // Check rate limit before placing order
+    const rateLimit = checkRateLimit();
+    if (!rateLimit.allowed) {
+      const timeRemaining = formatTimeRemaining(rateLimit.resetAt);
+      setError(`Terlalu banyak pesanan. Silakan coba lagi dalam ${timeRemaining}.`);
       return;
     }
 
@@ -125,7 +134,10 @@ export default function Checkout() {
           <h2 className="font-bold text-text-primary">Informasi Pelanggan</h2>
 
           {error && (
-            <p className="text-red-500 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>
+            <div className="flex items-start gap-2 text-red-500 text-sm bg-red-50 px-3 py-2 rounded-xl">
+              <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+              <p>{error}</p>
+            </div>
           )}
 
           <div>

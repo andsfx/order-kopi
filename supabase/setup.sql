@@ -64,20 +64,38 @@ create table orders (
   payment_id text,
   payment_url text,
   paid_at timestamptz,
+  session_token text, -- Anonymous session token for order tracking
   created_at timestamptz not null default now()
 );
 
 alter table orders enable row level security;
 
+-- Create index for session token lookups
+create index idx_orders_session_token on orders(session_token);
+
+-- Policy: Anyone can create orders (customers need to place orders)
 create policy "Anyone can create orders"
   on orders for insert with check (true);
 
-create policy "Anyone can view orders"
-  on orders for select using (true);
+-- Policy: Customers can only view their own orders (by session token)
+-- Admin (authenticated users) can view all orders
+create policy "Customers can view their own orders"
+  on orders for select
+  using (
+    session_token = current_setting('request.headers', true)::json->>'x-session-token'
+    or auth.role() = 'authenticated'
+  );
 
-create policy "Anyone can update orders"
-  on orders for update using (true);
+-- Policy: Customers can only update their own orders
+-- Admin (authenticated users) can update all orders
+create policy "Customers can update their own orders"
+  on orders for update
+  using (
+    session_token = current_setting('request.headers', true)::json->>'x-session-token'
+    or auth.role() = 'authenticated'
+  );
 
+-- Policy: Only admin can delete orders
 create policy "Authenticated users can delete orders"
   on orders for delete using (auth.role() = 'authenticated');
 

@@ -6,6 +6,7 @@ import { OrderProvider } from './lib/OrderContext';
 import { AuthProvider, useAuth } from './lib/useAuth';
 import { StoreProvider, useStore } from './lib/useStore';
 import { ToastProvider } from './components/Toast';
+import { useActivityTracker } from './lib/useActivityTracker';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 
@@ -16,6 +17,7 @@ const AdminPromo = lazy(() => import('./pages/AdminPromo'));
 const AdminBranch = lazy(() => import('./pages/AdminBranch'));
 const AdminSettings = lazy(() => import('./pages/AdminSettings'));
 const AdminHelp = lazy(() => import('./pages/AdminHelp'));
+const AdminAudit = lazy(() => import('./pages/AdminAudit'));
 const SetupWizard = lazy(() => import('./pages/SetupWizard'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const OrderStatus = lazy(() => import('./pages/OrderStatus'));
@@ -58,6 +60,36 @@ function NotFound() {
   );
 }
 
+function AppContent() {
+  // Track user activity for token auto-refresh
+  useActivityTracker(true);
+  
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center"><p className="text-text-muted">Memuat...</p></div>}>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<Home />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/order/:orderId" element={<OrderStatus />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* Protected Admin */}
+        <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+        <Route path="/admin/menu" element={<ProtectedRoute><AdminMenu /></ProtectedRoute>} />
+        <Route path="/admin/report" element={<ProtectedRoute><AdminReport /></ProtectedRoute>} />
+        <Route path="/admin/promo" element={<ProtectedRoute><AdminPromo /></ProtectedRoute>} />
+        <Route path="/admin/branch" element={<ProtectedRoute><AdminBranch /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+        <Route path="/admin/audit" element={<ProtectedRoute><AdminAudit /></ProtectedRoute>} />
+        <Route path="/admin/help" element={<ProtectedRoute><AdminHelp /></ProtectedRoute>} />
+        <Route path="/admin/setup" element={<ProtectedRoute allowSetup><SetupWizard /></ProtectedRoute>} />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -67,34 +99,14 @@ function App() {
             <OrderProvider>
               <CartProvider>
                 <BrowserRouter>
-                  <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center"><p className="text-text-muted">Memuat...</p></div>}>
-                    <Routes>
-                  {/* Public */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/order/:orderId" element={<OrderStatus />} />
-                  <Route path="/login" element={<Login />} />
-
-                  {/* Protected Admin */}
-                  <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                  <Route path="/admin/menu" element={<ProtectedRoute><AdminMenu /></ProtectedRoute>} />
-                  <Route path="/admin/report" element={<ProtectedRoute><AdminReport /></ProtectedRoute>} />
-                  <Route path="/admin/promo" element={<ProtectedRoute><AdminPromo /></ProtectedRoute>} />
-                  <Route path="/admin/branch" element={<ProtectedRoute><AdminBranch /></ProtectedRoute>} />
-                  <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
-                  <Route path="/admin/help" element={<ProtectedRoute><AdminHelp /></ProtectedRoute>} />
-                  <Route path="/admin/setup" element={<ProtectedRoute allowSetup><SetupWizard /></ProtectedRoute>} />
-
-                      <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </BrowserRouter>
-            </CartProvider>
-          </OrderProvider>
-        </ToastProvider>
-      </AuthProvider>
-    </StoreProvider>
-  </ErrorBoundary>
+                  <AppContent />
+                </BrowserRouter>
+              </CartProvider>
+            </OrderProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </StoreProvider>
+    </ErrorBoundary>
   );
 }
 

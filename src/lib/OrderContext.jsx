@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabase';
+import { getSessionToken } from './sessionToken';
+import { logOrderCreation, logStatusChange } from './auditLog';
 
 const OrderContext = createContext(null);
 
@@ -85,6 +87,9 @@ export function OrderProvider({ children }) {
 
   // Place a new order (insert into Supabase)
   async function placeOrder(cartItems, customerInfo) {
+    // Get or create session token for this customer
+    const sessionToken = getSessionToken();
+    
     const { data: counterData, error: counterError } = await supabase
       .rpc('generate_order_id');
 
@@ -95,7 +100,7 @@ export function OrderProvider({ children }) {
     const orderId = counterData;
     const total = cartItems.reduce((sum, i) => sum + (i.price ?? i.product.price) * i.qty, 0);
 
-    // Insert order
+    // Insert order with session token
     const { error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -106,6 +111,7 @@ export function OrderProvider({ children }) {
         status: 'pending_payment',
         payment_method: customerInfo.paymentMethod || 'qris',
         branch_id: customerInfo.branchId || null,
+        session_token: sessionToken, // Add session token for order ownership
       });
 
     if (orderError) {
@@ -134,6 +140,14 @@ export function OrderProvider({ children }) {
       throw new Error('Gagal menyimpan item order: ' + itemsError.message);
     }
 
+    // Log order creation to audit log
+    await logOrderCreation(orderId, {
+      customer_name: customerInfo.name,
+      total,
+      payment_method: customerInfo.paymentMethod || 'qris',
+      branch_id: customerInfo.branchId
+    }, sessionToken);
+
     return {
       id: orderId,
       customer: customerInfo,
@@ -147,6 +161,10 @@ export function OrderProvider({ children }) {
 
   // Update order status (for admin)
   async function updateStatus(orderId, newStatus) {
+    // Get current status before updating (for audit log)
+    const currentOrder = orders.find(o => o.id === orderId);
+    const oldStatus = currentOrder?.status;
+
     const { error } = await supabase
       .from('orders')
       .update({ status: newStatus })
@@ -155,6 +173,11 @@ export function OrderProvider({ children }) {
     if (error) {
       console.error('Gagal update status:', error);
       return;
+    }
+
+    // Log status change to audit log
+    if (oldStatus && oldStatus !== newStatus) {
+      await logStatusChange(orderId, oldStatus, newStatus, 'admin');
     }
 
     // Optimistic update
@@ -169,11 +192,15 @@ export function OrderProvider({ children }) {
     const local = orders.find((o) => o.id === orderId);
     if (local) return local;
 
-    // Fetch from DB
+    // Get session token to verify ownership
+    const sessionToken = getSessionToken();
+
+    // Fetch from DB - RLS policy will ensure only owner or admin can access
     const { data, error } = await supabase
       .from('orders')
       .select('*, order_items(*, products(name, image_url))')
       .eq('id', orderId)
+      .eq('session_token', sessionToken) // Filter by session token
       .single();
 
     if (error || !data) return null;

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Clock, Coffee, Package, ArrowLeft, Loader2, CreditCard, XCircle, Search, Star } from 'lucide-react';
-import { useOrders } from '../lib/OrderContext';
+import { supabase } from '../lib/supabase';
+import { getSessionToken } from '../lib/sessionToken';
+import { logOrderCancellation } from '../lib/auditLog';
+import { ArrowLeft, Clock, CheckCircle, ChefHat, Package, Star, Loader2, XCircle, Share2, MessageCircle } from 'lucide-react';
 import { useStore } from '../lib/useStore';
 import { supabase } from '../lib/supabase';
 
@@ -202,17 +204,23 @@ export default function OrderStatus() {
         {/* Cancel Button (if pending payment) */}
         {order.status === 'pending_payment' && (
           <section className="mt-4">
-            <button
+              <button
               disabled={cancelling}
               onClick={async () => {
                 if (!window.confirm('Yakin ingin membatalkan pesanan ini?')) return;
                 setCancelling(true);
                 try {
+                  const sessionToken = getSessionToken();
                   const { error } = await supabase
                     .from('orders')
                     .update({ status: 'cancelled' })
-                    .eq('id', order.id);
+                    .eq('id', order.id)
+                    .eq('session_token', sessionToken); // Verify ownership
                   if (error) throw error;
+                  
+                  // Log cancellation to audit log
+                  await logOrderCancellation(order.id, 'customer', sessionToken, 'Customer cancelled order');
+                  
                   setOrder((prev) => ({ ...prev, status: 'cancelled' }));
                 } catch {
                   alert('Gagal membatalkan pesanan');

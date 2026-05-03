@@ -42,6 +42,13 @@
 - Notifikasi Telegram (opsional, via Edge Function)
 - Auto-cancel pesanan yang tidak dibayar (opsional, via Edge Function)
 
+### Keamanan
+- **Session Token:** Setiap customer mendapat token unik untuk tracking order
+- **Order Isolation:** Customer hanya bisa akses order mereka sendiri
+- **Rate Limiting:** Maksimal 5 order per jam untuk mencegah spam
+- **RLS Policies:** Database-level security dengan Row Level Security
+- **Token Expiry:** Token otomatis expire setelah 24 jam
+
 ---
 
 ## Demo
@@ -72,6 +79,8 @@ npm install
 
 ### Langkah 2: Setup Database (Supabase)
 
+#### Untuk Database Baru:
+
 1. Buka [supabase.com](https://supabase.com) → buat project baru
 2. Tunggu project selesai dibuat (~1 menit)
 3. Buka **SQL Editor** (menu kiri)
@@ -81,6 +90,19 @@ npm install
 7. Pastikan tidak ada error (hijau semua)
 
 > File `setup.sql` sudah mencakup semua tabel, fungsi, kebijakan keamanan, storage, dan data sample. Cukup jalankan sekali.
+
+#### Untuk Database yang Sudah Ada (Migration):
+
+Jika kamu sudah punya database order-kopi versi lama, jalankan migration untuk menambahkan fitur session token:
+
+1. Buka **SQL Editor** di Supabase
+2. Copy-paste isi file `supabase/migrations/001_add_session_token.sql`
+3. Klik **"Run"**
+4. Verifikasi dengan query:
+```sql
+select column_name from information_schema.columns 
+where table_name = 'orders' and column_name = 'session_token';
+```
 
 ---
 
@@ -286,6 +308,108 @@ Login sebagai admin → **Kelola Cabang** → tambah cabang baru.
 | Font | Plus Jakarta Sans |
 | Hosting | Netlify (atau platform lain yang support SPA) |
 | PWA | vite-plugin-pwa |
+
+---
+
+## Keamanan & Privacy
+
+### Session Token System
+
+Order Kopi menggunakan **session token** untuk melindungi privasi customer tanpa memerlukan registrasi:
+
+**Cara Kerja:**
+1. Setiap customer mendapat token unik saat pertama kali order
+2. Token disimpan di localStorage browser
+3. Customer hanya bisa akses order dengan token mereka
+4. Token expire otomatis setelah 24 jam
+
+**Keuntungan:**
+- ✅ Tidak perlu registrasi/login
+- ✅ Order terisolasi per device
+- ✅ Mencegah orang lain lihat/manipulasi order kamu
+- ✅ Admin tetap bisa lihat semua order
+
+### Rate Limiting
+
+Untuk mencegah spam dan abuse:
+- Maksimal **5 order per jam** per device
+- Counter reset otomatis setelah 1 jam
+- Error message jelas jika limit tercapai
+
+### Database Security (RLS)
+
+Semua tabel menggunakan **Row Level Security (RLS)** Supabase:
+- Customer hanya bisa baca/update order mereka sendiri
+- Admin (authenticated) bisa akses semua data
+- Kebijakan keamanan di level database (tidak bisa di-bypass)
+
+### Testing Security
+
+Untuk memverifikasi keamanan sudah berjalan dengan benar, ikuti panduan di `SECURITY_TESTING.md`:
+
+```bash
+# Lihat panduan testing
+cat SECURITY_TESTING.md
+```
+
+**Test yang harus dilakukan:**
+1. ✅ Session token generation
+2. ✅ Order ownership isolation
+3. ✅ Prevent unauthorized updates
+4. ✅ Admin access verification
+5. ✅ Rate limiting
+6. ✅ Token expiry
+7. ✅ Cross-browser isolation
+8. ✅ Cancel order security
+
+---
+
+## Troubleshooting
+
+### Order tidak muncul setelah dibuat
+
+**Penyebab:** Session token hilang atau berubah
+
+**Solusi:**
+1. Cek localStorage: `localStorage.getItem('order_session_token')`
+2. Jangan clear browser data setelah order
+3. Gunakan browser yang sama untuk cek order
+
+### "Terlalu banyak pesanan" error
+
+**Penyebab:** Rate limit tercapai (5 order/jam)
+
+**Solusi:**
+1. Tunggu 1 jam untuk reset otomatis
+2. Atau reset manual (testing only):
+```javascript
+localStorage.removeItem('order_rate_limit');
+```
+
+### Admin tidak bisa lihat order
+
+**Penyebab:** RLS policy tidak aktif atau user belum authenticated
+
+**Solusi:**
+1. Pastikan sudah login sebagai admin
+2. Cek di Supabase Dashboard → Authentication → Users
+3. Verifikasi RLS policies aktif:
+```sql
+select policyname from pg_policies where tablename = 'orders';
+```
+
+### Migration error saat update database
+
+**Penyebab:** Kolom `session_token` sudah ada atau policy conflict
+
+**Solusi:**
+1. Cek apakah kolom sudah ada:
+```sql
+select column_name from information_schema.columns 
+where table_name = 'orders' and column_name = 'session_token';
+```
+2. Jika sudah ada, skip bagian `alter table`
+3. Hanya jalankan bagian `drop policy` dan `create policy`
 
 ---
 
