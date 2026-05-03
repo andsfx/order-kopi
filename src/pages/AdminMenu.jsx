@@ -129,7 +129,7 @@ export default function AdminMenu() {
   return (
     <div className="page-enter min-h-screen bg-white pb-8">
       <header className="sticky top-0 z-40 bg-white border-b border-border-light px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto flex items-center gap-3">
           <Link to="/admin" className="p-1.5 rounded-full bg-surface-secondary text-text-secondary active:scale-95 transition-transform" aria-label="Kembali">
             <ArrowLeft size={18} />
           </Link>
@@ -140,7 +140,7 @@ export default function AdminMenu() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 mt-4">
+      <main className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 mt-4">
         {/* Kategori */}
         <section className="bg-white rounded-2xl p-4 shadow-sm mb-4">
           <div className="flex items-center justify-between mb-3">
@@ -186,7 +186,7 @@ export default function AdminMenu() {
             <Loader2 size={24} className="animate-spin text-primary" />
           </div>
         ) : (
-          <section className="space-y-3">
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {products.map((product) => (
               <div key={product.id} className={`bg-white rounded-2xl p-3 shadow-sm flex gap-3 ${!product.is_available ? 'opacity-50' : ''}`}>
                 <img

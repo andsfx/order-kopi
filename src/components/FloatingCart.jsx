@@ -7,7 +7,7 @@ export default function FloatingCart({ onCheckout }) {
   if (totalItems === 0) return null;
 
   return (
-    <div className="fixed bottom-5 left-5 right-5 z-50 max-w-lg mx-auto animate-slide-up">
+    <div className="fixed bottom-5 left-5 right-5 z-50 max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto animate-slide-up">
       <button
         onClick={onCheckout}
         className="w-full bg-primary text-white rounded-2xl px-5 py-4 flex items-center justify-between shadow-[0_8px_32px_rgba(0,96,65,0.25)] active:scale-[0.98] transition-transform duration-150"

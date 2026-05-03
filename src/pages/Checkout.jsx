@@ -76,7 +76,7 @@ export default function Checkout() {
     <div className="page-enter min-h-screen bg-white pb-8">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-border-light px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
+        <div className="max-w-lg md:max-w-xl mx-auto flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
             className="p-1.5 rounded-full bg-surface-secondary text-text-secondary active:scale-95 transition-transform"
@@ -88,7 +88,7 @@ export default function Checkout() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 mt-4">
+      <main className="max-w-lg md:max-w-xl mx-auto px-4 mt-4">
         {/* Ringkasan Pesanan */}
         <section className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">

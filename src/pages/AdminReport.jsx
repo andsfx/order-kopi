@@ -109,7 +109,7 @@ export default function AdminReport() {
   return (
     <div className="page-enter min-h-screen bg-white pb-8">
       <header className="sticky top-0 z-40 bg-white border-b border-border-light px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto flex items-center gap-3">
           <Link to="/admin" className="p-1.5 rounded-full bg-surface-secondary text-text-secondary active:scale-95 transition-transform" aria-label="Kembali">
             <ArrowLeft size={18} />
           </Link>
@@ -117,7 +117,7 @@ export default function AdminReport() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 mt-4">
+      <main className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 mt-4">
         {/* Date Picker + Export */}
         <div className="mb-4 flex items-center gap-2">
           <input

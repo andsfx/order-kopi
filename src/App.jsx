@@ -12,6 +12,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 const AdminMenu = lazy(() => import('./pages/AdminMenu'));
 const AdminReport = lazy(() => import('./pages/AdminReport'));
 const AdminPromo = lazy(() => import('./pages/AdminPromo'));
+const AdminBranch = lazy(() => import('./pages/AdminBranch'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const OrderStatus = lazy(() => import('./pages/OrderStatus'));
 const Login = lazy(() => import('./pages/Login'));
@@ -68,6 +69,7 @@ function App() {
                 <Route path="/admin/menu" element={<ProtectedRoute><AdminMenu /></ProtectedRoute>} />
                 <Route path="/admin/report" element={<ProtectedRoute><AdminReport /></ProtectedRoute>} />
                 <Route path="/admin/promo" element={<ProtectedRoute><AdminPromo /></ProtectedRoute>} />
+                <Route path="/admin/branch" element={<ProtectedRoute><AdminBranch /></ProtectedRoute>} />
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -102,7 +102,7 @@ export default function Home() {
     <div className="page-enter min-h-screen bg-white pb-28">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border-light px-4 py-3">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-bold text-primary tracking-tight">Order Kopi</h1>
             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -128,7 +128,7 @@ export default function Home() {
 
       {/* Branch Selector - below header */}
       {selectedBranch && (
-        <div className="max-w-lg mx-auto px-5 py-2 bg-surface-secondary border-b border-border-light">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-5 py-2 bg-surface-secondary border-b border-border-light">
           <select
             value={selectedBranch?.id || ''}
             onChange={(e) => {
@@ -148,7 +148,7 @@ export default function Home() {
         </div>
       )}
 
-      <main className="max-w-lg mx-auto px-4">
+      <main className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4">
         {/* Store Closed Banner */}
         {!storeLoading && !isOpen && (
           <div className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
@@ -166,7 +166,7 @@ export default function Home() {
             {promos.map((promo) => (
               <div
                 key={promo.id}
-                className="flex-shrink-0 w-[72vw] max-w-[280px] h-36 rounded-2xl relative overflow-hidden snap-start group"
+                className="flex-shrink-0 w-[72vw] md:w-[45vw] lg:w-[30vw] max-w-[320px] h-36 rounded-2xl relative overflow-hidden snap-start group"
               >
                 <img
                   src={promo.image_url}
@@ -224,7 +224,7 @@ export default function Home() {
             <span className="text-xs text-text-muted">{filtered.length} menu</span>
           </div>
         )}
-        <section className={`${!loading && !error && filtered.length > 0 && !search.trim() ? '' : 'mt-4'} grid grid-cols-2 gap-3`}>
+        <section className={`${!loading && !error && filtered.length > 0 && !search.trim() ? '' : 'mt-4'} grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3`}>
           {loading ? (
             <>
               {Array.from({ length: 4 }).map((_, i) => (

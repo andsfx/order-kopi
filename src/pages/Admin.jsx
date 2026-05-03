@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Coffee, Package, CheckCircle, ChevronRight, CreditCard, Loader2, Ban, Check, UtensilsCrossed, LogOut, BarChart3, Megaphone, Store } from 'lucide-react';
+import { ArrowLeft, Clock, Coffee, Package, CheckCircle, ChevronRight, CreditCard, Loader2, Ban, Check, UtensilsCrossed, LogOut, BarChart3, Megaphone, Store, MapPin } from 'lucide-react';
 import { useOrders } from '../lib/OrderContext';
 import { useAuth } from '../lib/useAuth';
 import { useToast } from '../components/Toast';
@@ -69,7 +69,7 @@ export default function Admin() {
     <div className="page-enter min-h-screen bg-white pb-8">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-border-light px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto flex items-center gap-3">
           <Link
             to="/"
             className="p-1.5 rounded-full bg-surface-secondary text-text-secondary active:scale-95 transition-transform"
@@ -84,7 +84,7 @@ export default function Admin() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 mt-4">
+      <main className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 mt-4">
         {/* Quick Actions */}
         <section className="mb-4 space-y-3">
           <Link
@@ -123,6 +123,19 @@ export default function Admin() {
             <div className="flex-1">
               <p className="font-semibold text-text-primary text-sm">Kelola Promo</p>
               <p className="text-xs text-text-muted">Tambah, edit, hapus banner promo</p>
+            </div>
+            <ChevronRight size={16} className="text-text-muted" />
+          </Link>
+          <Link
+            to="/admin/branch"
+            className="w-full bg-white rounded-2xl p-4 shadow-[var(--shadow-card)] flex items-center gap-3 active:scale-[0.98] transition-transform"
+          >
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <MapPin size={20} className="text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-text-primary text-sm">Kelola Cabang</p>
+              <p className="text-xs text-text-muted">Tambah, edit, hapus lokasi cabang</p>
             </div>
             <ChevronRight size={16} className="text-text-muted" />
           </Link>
@@ -196,7 +209,7 @@ export default function Admin() {
         </section>
 
         {/* Orders List */}
-        <section className="mt-4 space-y-3">
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 size={24} className="animate-spin text-primary" />

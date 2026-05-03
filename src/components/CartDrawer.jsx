@@ -20,7 +20,7 @@ export default function CartDrawer({ open, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={onClose}>
       <div
-        className="bg-white w-full max-w-lg rounded-t-[28px] p-5 animate-slide-up max-h-[85vh] flex flex-col"
+        className="bg-white w-full max-w-lg md:max-w-xl rounded-t-[28px] p-5 animate-slide-up max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-border" /></div>
