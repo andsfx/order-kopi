@@ -3,6 +3,7 @@ import { Search, ChevronLeft, ChevronRight, Loader2, X, AlertTriangle } from 'lu
 import { useProducts } from '../lib/useProducts';
 import { useCart } from '../lib/CartContext';
 import { useStoreStatus } from '../lib/useStoreStatus';
+import { useStore } from '../lib/useStore';
 import { useToast } from '../components/Toast';
 import { supabase } from '../lib/supabase';
 import ProductCard from '../components/ProductCard';
@@ -19,6 +20,7 @@ const promoThemes = {
 export default function Home() {
   const { products, categories, loading, error } = useProducts();
   const { isOpen, loading: storeLoading } = useStoreStatus();
+  const { settings } = useStore();
   const { addToast } = useToast();
   const [activeCategory, setActiveCategory] = useState(null); // null = use first category when loaded
   const [search, setSearch] = useState('');
@@ -55,8 +57,7 @@ export default function Home() {
   useEscapeKey(() => setSelectedProduct(null), !!selectedProduct);
   useBodyScrollLock(!!selectedProduct || showCart);
 
-  // Default to first real category (not "Semua") when products load
-  const effectiveCategory = activeCategory || (categories.length > 1 ? categories[1] : 'Semua');
+  const effectiveCategory = activeCategory || 'Semua';
 
   const filtered = useMemo(() => {
     if (search.trim()) {
@@ -101,15 +102,32 @@ export default function Home() {
   return (
     <div className="page-enter min-h-screen bg-white pb-28">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border-light px-4 py-3">
-        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border-light">
+        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold text-primary tracking-tight">Order Kopi</h1>
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-              isOpen ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${isOpen ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
-              {isOpen ? 'Buka' : 'Tutup'}
+            <h1 className="text-lg font-bold text-primary tracking-tight">{settings.store_name}</h1>
+            <div className="flex items-center gap-2">
+              {selectedBranch && (
+                <select
+                  value={selectedBranch?.id || ''}
+                  onChange={(e) => {
+                    const branch = branches.find(b => b.id === parseInt(e.target.value));
+                    setSelectedBranch(branch);
+                    localStorage.setItem('selected-branch', JSON.stringify(branch));
+                  }}
+                  className="bg-surface-secondary text-xs font-medium text-text-primary rounded-full px-3 py-1 outline-none cursor-pointer max-w-[160px] truncate"
+                >
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              )}
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                isOpen ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+              }`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isOpen ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
+                {isOpen ? 'Buka' : 'Tutup'}
+              </div>
             </div>
           </div>
           <div className="relative mt-2">
@@ -124,29 +142,25 @@ export default function Home() {
             />
           </div>
         </div>
-      </header>
-
-      {/* Branch Selector - below header */}
-      {selectedBranch && (
-        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-5 py-2 bg-surface-secondary border-b border-border-light">
-          <select
-            value={selectedBranch?.id || ''}
-            onChange={(e) => {
-              const branch = branches.find(b => b.id === parseInt(e.target.value));
-              setSelectedBranch(branch);
-              localStorage.setItem('selected-branch', JSON.stringify(branch));
-            }}
-            className="w-full bg-transparent text-sm font-medium text-text-primary outline-none cursor-pointer"
-          >
-            {branches.map(b => (
-              <option key={b.id} value={b.id}>{b.name}</option>
+        {/* Category tabs inside header so they stick together */}
+        <div className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 pb-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  effectiveCategory === cat
+                    ? 'bg-primary text-white shadow-[0_2px_8px_rgba(0,96,65,0.3)] scale-[1.02]'
+                    : 'bg-surface-secondary text-text-secondary hover:bg-surface-accent active:scale-95'
+                }`}
+              >
+                {cat}
+              </button>
             ))}
-          </select>
-          {selectedBranch.address && (
-            <p className="text-xs text-text-muted mt-0.5">{selectedBranch.address}</p>
-          )}
+          </div>
         </div>
-      )}
+      </header>
 
       <main className="max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4">
         {/* Store Closed Banner */}
@@ -198,24 +212,7 @@ export default function Home() {
           </button>
         </section>
 
-        {/* Kategori */}
-        <section className="mt-5 sticky top-[72px] z-30 bg-white pt-1 pb-2 -mx-4 px-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  effectiveCategory === cat
-                    ? 'bg-primary text-white shadow-[0_2px_8px_rgba(0,96,65,0.3)] scale-[1.02]'
-                    : 'bg-surface-secondary text-text-secondary hover:bg-surface-accent active:scale-95'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </section>
+        {/* Spacer for content below sticky header */}
 
         {/* Grid Produk */}
         {!loading && !error && filtered.length > 0 && !search.trim() && (

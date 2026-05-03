@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { CartProvider } from './lib/CartContext';
 import { OrderProvider } from './lib/OrderContext';
 import { AuthProvider, useAuth } from './lib/useAuth';
+import { StoreProvider, useStore } from './lib/useStore';
 import { ToastProvider } from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
@@ -13,14 +14,18 @@ const AdminMenu = lazy(() => import('./pages/AdminMenu'));
 const AdminReport = lazy(() => import('./pages/AdminReport'));
 const AdminPromo = lazy(() => import('./pages/AdminPromo'));
 const AdminBranch = lazy(() => import('./pages/AdminBranch'));
+const AdminSettings = lazy(() => import('./pages/AdminSettings'));
+const AdminHelp = lazy(() => import('./pages/AdminHelp'));
+const SetupWizard = lazy(() => import('./pages/SetupWizard'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const OrderStatus = lazy(() => import('./pages/OrderStatus'));
 const Login = lazy(() => import('./pages/Login'));
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowSetup = false }) {
   const { user, loading } = useAuth();
+  const { settings, loading: storeLoading } = useStore();
 
-  if (loading) {
+  if (loading || storeLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-text-muted">Memuat...</p>
@@ -30,6 +35,11 @@ function ProtectedRoute({ children }) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Redirect to setup wizard if not completed (unless we're already on setup)
+  if (!allowSetup && settings.setup_completed === 'false') {
+    return <Navigate to="/admin/setup" replace />;
   }
 
   return children;
@@ -51,34 +61,39 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ToastProvider>
-          <OrderProvider>
-            <CartProvider>
-              <BrowserRouter>
-                <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center"><p className="text-text-muted">Memuat...</p></div>}>
-                  <Routes>
-                {/* Public */}
-                <Route path="/" element={<Home />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/order/:orderId" element={<OrderStatus />} />
-                <Route path="/login" element={<Login />} />
+      <StoreProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <OrderProvider>
+              <CartProvider>
+                <BrowserRouter>
+                  <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center"><p className="text-text-muted">Memuat...</p></div>}>
+                    <Routes>
+                  {/* Public */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/order/:orderId" element={<OrderStatus />} />
+                  <Route path="/login" element={<Login />} />
 
-                {/* Protected Admin */}
-                <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                <Route path="/admin/menu" element={<ProtectedRoute><AdminMenu /></ProtectedRoute>} />
-                <Route path="/admin/report" element={<ProtectedRoute><AdminReport /></ProtectedRoute>} />
-                <Route path="/admin/promo" element={<ProtectedRoute><AdminPromo /></ProtectedRoute>} />
-                <Route path="/admin/branch" element={<ProtectedRoute><AdminBranch /></ProtectedRoute>} />
+                  {/* Protected Admin */}
+                  <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                  <Route path="/admin/menu" element={<ProtectedRoute><AdminMenu /></ProtectedRoute>} />
+                  <Route path="/admin/report" element={<ProtectedRoute><AdminReport /></ProtectedRoute>} />
+                  <Route path="/admin/promo" element={<ProtectedRoute><AdminPromo /></ProtectedRoute>} />
+                  <Route path="/admin/branch" element={<ProtectedRoute><AdminBranch /></ProtectedRoute>} />
+                  <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+                  <Route path="/admin/help" element={<ProtectedRoute><AdminHelp /></ProtectedRoute>} />
+                  <Route path="/admin/setup" element={<ProtectedRoute allowSetup><SetupWizard /></ProtectedRoute>} />
 
-                    <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </CartProvider>
-        </OrderProvider>
-      </ToastProvider>
-    </AuthProvider>
+                      <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </CartProvider>
+          </OrderProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </StoreProvider>
   </ErrorBoundary>
   );
 }

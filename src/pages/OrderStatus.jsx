@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Clock, Coffee, Package, ArrowLeft, Loader2, CreditCard, XCircle, Search, Star } from 'lucide-react';
 import { useOrders } from '../lib/OrderContext';
+import { useStore } from '../lib/useStore';
 import { supabase } from '../lib/supabase';
 
 const STEPS = [
@@ -15,6 +16,7 @@ const STEPS = [
 export default function OrderStatus() {
   const { orderId } = useParams();
   const { getOrder } = useOrders();
+  const { settings } = useStore();
   const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
@@ -177,8 +179,8 @@ export default function OrderStatus() {
                 </p>
                 <div className="flex justify-center">
                   <img
-                    src="/qris.jpg"
-                    alt="QRIS GoPay Merchant"
+                    src={settings.qris_image || '/qris.jpg'}
+                    alt="QRIS Payment"
                     className="w-56 h-56 object-contain rounded-xl border border-border"
                   />
                 </div>
