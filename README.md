@@ -7,8 +7,146 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
 
-<!-- Screenshot -->
-<!-- ![Order Kopi Screenshot](screenshot.png) -->
+---
+
+## 📸 Screenshots
+
+> **Catatan:** Tambahkan screenshot aplikasi Anda di folder `screenshots/` dan update link di bawah ini.
+
+### Customer Interface
+| Menu & Keranjang | Order Status | Rating & Review |
+|------------------|--------------|-----------------|
+| ![Menu](screenshots/menu.png) | ![Order Status](screenshots/order-status.png) | ![Rating](screenshots/rating.png) |
+| Browse menu dengan kategori, search, dan filter | Track pesanan real-time dengan estimasi waktu | Berikan rating dan review setelah pesanan selesai |
+
+### Admin Dashboard
+| Dashboard | Kelola Menu | Laporan Penjualan |
+|-----------|-------------|-------------------|
+| ![Dashboard](screenshots/admin-dashboard.png) | ![Menu Management](screenshots/admin-menu.png) | ![Reports](screenshots/admin-reports.png) |
+| Monitor pesanan real-time dengan filter status | CRUD produk, kategori, dan upload foto | Analisis penjualan harian dengan grafik |
+
+### Payment Flow
+| QRIS Dinamis | Konfirmasi Pembayaran |
+|--------------|----------------------|
+| ![QRIS](screenshots/qris-payment.png) | ![Payment Confirmed](screenshots/payment-confirmed.png) |
+| Generate QRIS unik per transaksi via Cashi.id | Auto-confirm pembayaran via webhook |
+
+---
+
+## ✨ Mengapa Order Kopi?
+
+### 🚀 Siap Produksi
+- **Production-Ready:** Security hardening lengkap (webhook signature, RLS policies, rate limiting)
+- **Scalable Architecture:** Supabase PostgreSQL + Edge Functions untuk performa optimal
+- **Zero Downtime:** Real-time updates tanpa refresh halaman
+- **PWA Support:** Install di HP seperti aplikasi native
+
+### 💰 Hemat Biaya
+- **Gratis untuk Mulai:** Supabase free tier (500K requests/bulan) + Vercel/Netlify hosting gratis
+- **No Monthly Fee:** Tidak ada biaya bulanan untuk infrastruktur dasar
+- **Pay As You Grow:** Bayar hanya saat traffic meningkat
+- **Open Source:** Tidak ada biaya lisensi, customize sesuka hati
+
+### 🔒 Keamanan Enterprise
+- **Webhook Signature Verification:** HMAC-SHA256 untuk validasi payment webhook
+- **Row Level Security (RLS):** Database-level isolation antar customer
+- **Rate Limiting:** Server-side protection (10 req/min per IP)
+- **Payment Amount Validation:** Fraud detection dengan audit logging
+- **Session Token Security:** Setiap customer punya token unik dengan auto-refresh
+- **Audit Trail:** Immutable log untuk semua perubahan order
+
+### ⚡ Developer Experience
+- **Modern Stack:** React 19 + Vite 8 + Tailwind CSS 4
+- **Type Safety:** Full TypeScript support (opsional)
+- **Hot Reload:** Instant feedback saat development
+- **Easy Deployment:** One-click deploy ke Vercel/Netlify
+- **Comprehensive Docs:** Setup guide, troubleshooting, dan API reference lengkap
+
+### 🎯 Fitur Bisnis
+- **Multi-Branch:** Kelola beberapa cabang toko dalam satu aplikasi
+- **Dynamic Pricing:** Harga berbeda per ukuran dan customization
+- **Promo Management:** Banner promo dengan scheduling
+- **Sales Analytics:** Laporan penjualan harian dengan grafik per jam
+- **Customer Insights:** Rating, review, dan feedback tracking
+- **WhatsApp Integration:** Share order link via WhatsApp
+
+### 🔄 Payment Flexibility
+- **Dynamic QRIS:** Generate QRIS unik per transaksi via Cashi.id
+- **Auto-Confirmation:** Webhook otomatis update status pembayaran (<2 detik)
+- **Cash Payment:** Fallback untuk bayar di kasir
+- **Payment Tracking:** Audit log lengkap untuk setiap transaksi
+
+### 📱 Mobile-First Design
+- **Responsive:** Optimal di semua ukuran layar (mobile, tablet, desktop)
+- **Touch-Friendly:** UI dirancang untuk interaksi touch
+- **Fast Loading:** Optimized assets dan lazy loading
+- **Offline Support:** PWA dengan service worker (coming soon)
+
+---
+
+## 🎯 Use Cases
+
+### Coffee Shop / Café
+- Kurangi antrian kasir dengan self-order
+- Customer bisa order dari meja (scan QR code)
+- Notifikasi otomatis saat pesanan siap
+
+### Food Court / Kantin
+- Multi-tenant support (beberapa tenant dalam satu aplikasi)
+- Tracking antrian per tenant
+- Laporan penjualan terpisah per tenant
+
+### Event / Festival
+- Handle high traffic dengan rate limiting
+- Quick order untuk mengurangi antrian
+- Real-time dashboard untuk monitor penjualan
+
+### Cloud Kitchen / Ghost Kitchen
+- Order online tanpa dine-in
+- Integrasi dengan delivery service (via webhook)
+- Focus pada efisiensi operasional
+
+---
+
+## 🏆 Kelebihan Dibanding Kompetitor
+
+| Fitur | Order Kopi | Kompetitor A | Kompetitor B |
+|-------|------------|--------------|--------------|
+| **Biaya Setup** | Gratis | $99/bulan | $49/bulan |
+| **Dynamic QRIS** | ✅ Via Cashi.id | ❌ Static only | ✅ Via Midtrans |
+| **Auto-Confirm Payment** | ✅ Webhook | ❌ Manual | ✅ Webhook |
+| **Rate Limiting** | ✅ Server-side | ❌ None | ✅ Client-side |
+| **Audit Logging** | ✅ Immutable | ❌ None | ⚠️ Basic |
+| **Multi-Branch** | ✅ Built-in | ⚠️ Add-on | ✅ Built-in |
+| **PWA Support** | ✅ Yes | ❌ No | ✅ Yes |
+| **Open Source** | ✅ MIT License | ❌ Proprietary | ❌ Proprietary |
+| **Customizable** | ✅ Full access | ⚠️ Limited | ❌ No |
+| **Self-Hosted** | ✅ Yes | ❌ No | ❌ No |
+
+---
+
+## 📊 Tech Stack
+
+### Frontend
+- **React 19** - UI library dengan concurrent features
+- **Vite 8** - Lightning-fast build tool
+- **Tailwind CSS 4** - Utility-first CSS framework
+- **Lucide React** - Beautiful icon library
+- **React Router** - Client-side routing
+
+### Backend
+- **Supabase** - PostgreSQL database + Auth + Storage + Edge Functions
+- **PostgreSQL** - Relational database dengan RLS policies
+- **Edge Functions** - Serverless functions (Deno runtime)
+
+### Payment
+- **Cashi.id** - Dynamic QRIS payment gateway
+- **Webhook Integration** - Auto-confirm payment dengan signature verification
+
+### DevOps
+- **Vercel / Netlify** - Frontend hosting dengan CDN
+- **GitHub Actions** - CI/CD pipeline (opsional)
+- **Supabase CLI** - Database migrations dan deployment
 
 ---
 
