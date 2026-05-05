@@ -123,3 +123,62 @@ The code is production-ready but requires manual deployment:
 - Manual test guide: .sisyphus/evidence/task-3-rls-manual-test.md
 - Automated test blocked by RLS on orders table (requires proper header setup)
 
+
+## Rate Limiting Implementation (2026-05-05 12:24)
+
+### What Was Done
+Implemented server-side IP-based rate limiting in create-cashi-payment Edge Function:
+- **Limit**: 10 requests/minute per IP
+- **Method**: Sliding window with in-memory Map storage
+- **Response**: HTTP 429 with Retry-After header
+
+### Implementation Details
+1. **IP Extraction**: Prioritizes X-Forwarded-For → X-Real-IP → fallback
+2. **Sliding Window**: Filters timestamps older than 60 seconds
+3. **Clean Response**: Returns retry_after_seconds and proper headers
+4. **Logging**: Warns on rate limit violations with IP and count
+
+### Code Pattern
+```typescript
+// Rate limit check before processing
+const clientIP = getClientIP(req);
+const retryAfter = checkRateLimit(clientIP);
+
+if (retryAfter !== null) {
+  return new Response(JSON.stringify({ 
+    error: 'Rate limit exceeded',
+    retry_after_seconds: retryAfter
+  }), { 
+    status: 429,
+    headers: { 'Retry-After': retryAfter.toString() }
+  });
+}
+```
+
+### Security Benefits
+✅ Server-side enforcement (client cannot bypass)
+✅ Prevents payment spam from single IP
+✅ Proper HTTP semantics (429 + Retry-After)
+✅ Observable via logs
+
+### Known Limitations
+⚠️ In-memory storage: Resets on cold start
+⚠️ Shared IPs: Users behind NAT share limit
+⚠️ No distributed state: Each instance has separate counters
+
+### Production Considerations
+For high-traffic production:
+- Consider Deno KV for persistent storage
+- Monitor false positives from shared IPs
+- Adjust limit based on legitimate usage patterns
+- Consider combining IP + session token for authenticated users
+
+### Testing
+Manual test script created: .sisyphus/evidence/test-rate-limit.ps1
+Expected: First 10 requests succeed (200), next 5 fail (429)
+
+### Lessons Learned
+- Edge Functions benefit from simple in-memory solutions
+- Sliding window is more user-friendly than fixed window
+- Always include Retry-After header for rate limits
+- IP extraction needs fallback chain for different proxy configs

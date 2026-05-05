@@ -17,6 +17,66 @@ interface PaymentRequest {
   customer_email?: string;
 }
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10;
+
+// In-memory rate limit store: IP -> array of timestamps
+const rateLimitStore = new Map<string, number[]>();
+
+/**
+ * Extract client IP from request headers
+ */
+function getClientIP(req: Request): string {
+  // Try X-Forwarded-For first (common in proxies/load balancers)
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    // X-Forwarded-For can contain multiple IPs, take the first one
+    return forwardedFor.split(',')[0].trim();
+  }
+  
+  // Try X-Real-IP (used by some proxies)
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  
+  // Fallback to 'unknown' if no IP headers found
+  return 'unknown';
+}
+
+/**
+ * Check if request should be rate limited
+ * Returns null if allowed, or seconds until retry if rate limited
+ */
+function checkRateLimit(ip: string): number | null {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  
+  // Get existing timestamps for this IP
+  let timestamps = rateLimitStore.get(ip) || [];
+  
+  // Remove timestamps outside the current window
+  timestamps = timestamps.filter(ts => ts > windowStart);
+  
+  // Check if limit exceeded
+  if (timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
+    // Calculate seconds until oldest request expires
+    const oldestTimestamp = timestamps[0];
+    const retryAfterMs = oldestTimestamp + RATE_LIMIT_WINDOW_MS - now;
+    const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
+    
+    console.warn(`Rate limit exceeded for IP ${ip}: ${timestamps.length} requests in window`);
+    return retryAfterSeconds;
+  }
+  
+  // Add current timestamp
+  timestamps.push(now);
+  rateLimitStore.set(ip, timestamps);
+  
+  return null;
+}
+
 serve(async (req) => {
   // CORS headers
   if (req.method === 'OPTIONS') {
@@ -30,6 +90,27 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting check
+    const clientIP = getClientIP(req);
+    const retryAfter = checkRateLimit(clientIP);
+    
+    if (retryAfter !== null) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded. Too many payment requests.',
+          retry_after_seconds: retryAfter
+        }),
+        { 
+          status: 429,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Retry-After': retryAfter.toString(),
+            'Access-Control-Allow-Origin': '*',
+          } 
+        }
+      );
+    }
+
     // Parse request body
     const { order_id, amount, customer_name, customer_email }: PaymentRequest = await req.json();
 
