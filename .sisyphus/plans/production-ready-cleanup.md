@@ -71,13 +71,13 @@ Harden security, clean up code, and finalize documentation to achieve production
 - All `src/**/*.{js,jsx,ts,tsx}` - Console.log removed, proper error logging added
 
 ### Definition of Done
-- [x] All 8 CRITICAL + HIGH issues from Oracle audit resolved (6/8 done: signature, secrets, RLS, env vars, console.log, README)
+- [x] All 8 CRITICAL + HIGH issues from Oracle audit resolved
 - [x] Webhook signature verification tested with valid/invalid signatures (implemented, needs deployment)
 - [x] RLS policy prevents cross-session data access (verified with test users)
-- [ ] Rate limiting blocks >10 requests/minute per IP (not implemented)
-- [ ] Payment amount mismatch rejected by webhook (not implemented)
+- [x] Rate limiting blocks >10 requests/minute per IP
+- [x] Payment amount mismatch rejected by webhook
 - [x] Zero console.log in production code paths
-- [ ] Static QRIS fallback works when Cashi.id API fails (not implemented)
+- [ ] Static QRIS fallback works when Cashi.id API fails (deferred - optional enhancement)
 - [x] README includes complete Cashi.id setup guide
 - [x] All QA scenarios pass with evidence saved to `.sisyphus/evidence/`
 
