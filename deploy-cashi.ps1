@@ -27,9 +27,13 @@ Write-Host ""
 
 # Set secrets
 Write-Host "Setting environment variables..." -ForegroundColor Yellow
-npx supabase secrets set CASHI_API_KEY=CASHI-1AKE5VR2PAD
-npx supabase secrets set CASHI_WEBHOOK_SECRET=sk_02ee564329393b25a5ea0b56bb4e7cb6
-Write-Host "✅ Secrets configured" -ForegroundColor Green
+Write-Host "⚠️  Please set secrets manually using:" -ForegroundColor Yellow
+Write-Host "   npx supabase secrets set CASHI_API_KEY=your_cashi_api_key_here" -ForegroundColor Cyan
+Write-Host "   npx supabase secrets set CASHI_WEBHOOK_SECRET=your_cashi_webhook_secret_here" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Press any key to continue after setting secrets..." -ForegroundColor Yellow
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+Write-Host "✅ Continuing deployment" -ForegroundColor Green
 Write-Host ""
 
 # Deploy create-cashi-payment function

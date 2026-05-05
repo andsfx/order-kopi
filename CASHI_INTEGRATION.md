@@ -49,8 +49,8 @@ npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 
 # Set secrets
-npx supabase secrets set CASHI_API_KEY=CASHI-1AKE5VR2PAD
-npx supabase secrets set CASHI_WEBHOOK_SECRET=sk_02ee564329393b25a5ea0b56bb4e7cb6
+npx supabase secrets set CASHI_API_KEY=your_cashi_api_key_here
+npx supabase secrets set CASHI_WEBHOOK_SECRET=your_cashi_webhook_secret_here
 ```
 
 ### 2. Deploy Edge Functions
@@ -71,7 +71,7 @@ npx supabase functions deploy cashi-webhook --no-verify-jwt
    ```
    https://YOUR_PROJECT_REF.supabase.co/functions/v1/cashi-webhook
    ```
-4. Set webhook secret: `sk_02ee564329393b25a5ea0b56bb4e7cb6`
+4. Set webhook secret: `your_cashi_webhook_secret_here` (same as CASHI_WEBHOOK_SECRET)
 5. Enable events: `payment.success`, `payment.failed`
 
 ### 4. Test Integration

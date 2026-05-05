@@ -26,12 +26,12 @@ Kamu perlu:
 
 ```
 Name: CASHI_API_KEY
-Value: CASHI-1AKE5VR2PAD
+Value: your_cashi_api_key_here
 ```
 
 ```
 Name: CASHI_WEBHOOK_SECRET
-Value: sk_02ee564329393b25a5ea0b56bb4e7cb6
+Value: your_cashi_webhook_secret_here
 ```
 
 6. Click **Save** untuk masing-masing
@@ -78,7 +78,7 @@ https://kmmxfqqpoipeqdcvtljv.supabase.co/functions/v1/cashi-webhook
 3. Add new webhook:
    - **URL:** `https://kmmxfqqpoipeqdcvtljv.supabase.co/functions/v1/cashi-webhook`
    - **Events:** Select `payment.success` atau `payment.paid`
-   - **Secret:** `sk_02ee564329393b25a5ea0b56bb4e7cb6`
+   - **Secret:** `your_cashi_webhook_secret_here` (same as CASHI_WEBHOOK_SECRET)
 4. Click **Save**
 
 ---
