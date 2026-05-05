@@ -36,6 +36,7 @@ create table products (
   description text,
   image_url text,
   is_available boolean not null default true,
+  discount_percent int check (discount_percent >= 0 and discount_percent <= 100),
   created_at timestamptz not null default now()
 );
 

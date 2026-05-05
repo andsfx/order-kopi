@@ -10,7 +10,7 @@ export default function AdminMenu() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', price: '', category_id: '', description: '', image_url: '', is_available: true });
+  const [form, setForm] = useState({ name: '', price: '', category_id: '', description: '', image_url: '', is_available: true, discount_percent: '' });
   const [imageFile, setImageFile] = useState(null);
 
   // Category management
@@ -33,7 +33,7 @@ export default function AdminMenu() {
 
   function openAdd() {
     setEditing(null);
-    setForm({ name: '', price: '', category_id: categories[0]?.id || '', description: '', image_url: '', is_available: true });
+    setForm({ name: '', price: '', category_id: categories[0]?.id || '', description: '', image_url: '', is_available: true, discount_percent: '' });
     setImageFile(null);
     setShowForm(true);
   }
@@ -47,6 +47,7 @@ export default function AdminMenu() {
       description: product.description || '',
       image_url: product.image_url || '',
       is_available: product.is_available,
+      discount_percent: product.discount_percent != null ? String(product.discount_percent) : '',
     });
     setImageFile(null);
     setShowForm(true);
@@ -78,6 +79,7 @@ export default function AdminMenu() {
         description: form.description.trim() || null,
         image_url: imageUrl || null,
         is_available: form.is_available,
+        discount_percent: form.discount_percent ? parseInt(form.discount_percent, 10) : null,
       };
 
       if (editing) {
@@ -246,6 +248,30 @@ export default function AdminMenu() {
                 <label className="text-sm font-medium text-text-secondary mb-1.5 block">Harga (Rp)</label>
                 <input type="number" required min="1000" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-surface-secondary text-sm border border-transparent outline-none focus:border-primary/30" />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-text-secondary mb-1.5 block">
+                  Diskon (%)
+                  <span className="ml-1.5 text-xs font-normal text-text-muted">— kosongkan jika tidak ada diskon</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="0"
+                    value={form.discount_percent}
+                    onChange={(e) => setForm({ ...form, discount_percent: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-surface-secondary text-sm border border-transparent outline-none focus:border-primary/30 pr-10"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium">%</span>
+                </div>
+                {form.discount_percent > 0 && form.price > 0 && (
+                  <p className="text-xs text-emerald-600 mt-1 font-medium">
+                    Harga setelah diskon: Rp {Math.round(parseInt(form.price) * (1 - parseInt(form.discount_percent) / 100)).toLocaleString('id-ID')}
+                  </p>
+                )}
               </div>
 
               <div>

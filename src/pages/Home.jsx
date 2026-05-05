@@ -71,6 +71,19 @@ export default function Home() {
 
   function getSelectedPrice() {
     if (!selectedProduct) return 0;
+    let basePrice;
+    if (options.size === 'Small' && selectedProduct.price_small != null) basePrice = selectedProduct.price_small;
+    else if (options.size === 'Large' && selectedProduct.price_large != null) basePrice = selectedProduct.price_large;
+    else basePrice = selectedProduct.price;
+
+    if (selectedProduct.discount_percent && selectedProduct.discount_percent > 0) {
+      return Math.round(basePrice * (1 - selectedProduct.discount_percent / 100));
+    }
+    return basePrice;
+  }
+
+  function getOriginalPrice() {
+    if (!selectedProduct) return 0;
     if (options.size === 'Small' && selectedProduct.price_small != null) return selectedProduct.price_small;
     if (options.size === 'Large' && selectedProduct.price_large != null) return selectedProduct.price_large;
     return selectedProduct.price;
@@ -292,9 +305,21 @@ export default function Home() {
               <div>
                 <h2 className="font-bold text-lg text-text-primary">{selectedProduct.name}</h2>
                 <p className="text-sm text-text-muted mt-0.5">{selectedProduct.description}</p>
-                <p className="text-primary font-bold mt-1">
-                  Rp {getSelectedPrice().toLocaleString('id-ID')}
-                </p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {selectedProduct.discount_percent > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      -{selectedProduct.discount_percent}%
+                    </span>
+                  )}
+                  <p className="text-primary font-bold">
+                    Rp {getSelectedPrice().toLocaleString('id-ID')}
+                  </p>
+                  {selectedProduct.discount_percent > 0 && (
+                    <p className="text-text-muted text-sm line-through">
+                      Rp {getOriginalPrice().toLocaleString('id-ID')}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 

@@ -22,9 +22,16 @@ export function CartProvider({ children }) {
   }, [items]);
 
   function getPrice(product, size) {
-    if (size === 'Small' && product.price_small != null) return product.price_small;
-    if (size === 'Large' && product.price_large != null) return product.price_large;
-    return product.price;
+    let basePrice;
+    if (size === 'Small' && product.price_small != null) basePrice = product.price_small;
+    else if (size === 'Large' && product.price_large != null) basePrice = product.price_large;
+    else basePrice = product.price;
+
+    // Apply discount if exists
+    if (product.discount_percent && product.discount_percent > 0) {
+      return Math.round(basePrice * (1 - product.discount_percent / 100));
+    }
+    return basePrice;
   }
 
   function addItem(product, options) {
