@@ -18,7 +18,7 @@
 - Lihat menu dengan kategori dan pencarian
 - Pilih ukuran (Small/Regular/Large), suhu (Hot/Iced), dan level gula
 - Keranjang belanja dengan quantity adjustment
-- Checkout dengan QRIS atau bayar di kasir (cash)
+- Checkout dengan QRIS dinamis (via Cashi.id) atau bayar di kasir (cash)
 - Tracking status pesanan real-time (Bayar → Menunggu → Diproses → Siap → Selesai)
 - Estimasi waktu tunggu + posisi antrian
 - Rating & review setelah pesanan selesai
@@ -364,6 +364,108 @@ cat SECURITY_TESTING.md
 6. ✅ Token expiry
 7. ✅ Cross-browser isolation
 8. ✅ Cancel order security
+
+---
+
+## Integrasi Cashi.id (Payment Gateway)
+
+Order Kopi menggunakan [Cashi.id](https://cashi.id) untuk generate QRIS dinamis per transaksi. Setiap order mendapat QRIS unik dengan nominal yang tepat, dan status pembayaran otomatis terupdate via webhook.
+
+### Setup Cashi.id
+
+1. **Daftar akun** di [Cashi.id](https://cashi.id)
+2. **Dapatkan API Key:**
+   - Login ke dashboard Cashi.id
+   - Buka menu **Settings** → **API Keys**
+   - Copy API Key kamu
+3. **Dapatkan Webhook Secret:**
+   - Di dashboard Cashi.id, buka **Webhooks**
+   - Copy Webhook Secret (untuk verifikasi signature)
+
+### Environment Variables
+
+Tambahkan ke file `.env`:
+
+```env
+# Cashi.id API Key (dari dashboard)
+VITE_CASHI_API_KEY=your_api_key_here
+
+# Cashi.id Webhook Secret (untuk verifikasi signature)
+CASHI_WEBHOOK_SECRET=your_webhook_secret_here
+```
+
+> **Catatan:** `VITE_CASHI_API_KEY` digunakan di frontend untuk generate QRIS. `CASHI_WEBHOOK_SECRET` digunakan di backend (Edge Function) untuk verifikasi webhook.
+
+### Konfigurasi Webhook
+
+Webhook digunakan untuk update status pembayaran secara otomatis saat customer bayar via QRIS.
+
+1. **Setup Webhook URL:**
+   - Di dashboard Cashi.id, buka **Webhooks**
+   - Tambahkan webhook URL: `https://your-project.supabase.co/functions/v1/cashi-webhook`
+   - Ganti `your-project` dengan project ID Supabase kamu
+   - Pilih event: **Payment Success**
+
+2. **Deploy Edge Function:**
+   ```bash
+   supabase functions deploy cashi-webhook
+   ```
+
+3. **Test Webhook:**
+   - Buat order test di aplikasi
+   - Bayar via QRIS (bisa pakai sandbox mode di Cashi.id)
+   - Cek status order otomatis berubah jadi "Menunggu"
+
+### Cara Kerja
+
+1. **Customer checkout** → Frontend hit API Cashi.id untuk generate QRIS
+2. **QRIS ditampilkan** → Customer scan & bayar
+3. **Cashi.id kirim webhook** → Edge Function terima notifikasi
+4. **Status order terupdate** → Dari "Bayar" jadi "Menunggu"
+5. **Admin ternotifikasi** → Order masuk queue untuk diproses
+
+### Troubleshooting Cashi.id
+
+#### QRIS tidak muncul saat checkout
+
+**Penyebab:** API Key salah atau tidak diset
+
+**Solusi:**
+1. Cek `.env` → pastikan `VITE_CASHI_API_KEY` terisi
+2. Restart dev server: `npm run dev`
+3. Verifikasi API Key di dashboard Cashi.id
+
+#### Status pembayaran tidak update otomatis
+
+**Penyebab:** Webhook tidak terkonfigurasi atau signature invalid
+
+**Solusi:**
+1. Cek webhook URL di dashboard Cashi.id
+2. Pastikan `CASHI_WEBHOOK_SECRET` di Edge Function sama dengan di dashboard
+3. Cek logs Edge Function:
+   ```bash
+   supabase functions logs cashi-webhook
+   ```
+4. Test webhook manual via dashboard Cashi.id
+
+#### Error "Invalid signature" di webhook
+
+**Penyebab:** Webhook secret tidak match
+
+**Solusi:**
+1. Copy ulang Webhook Secret dari dashboard Cashi.id
+2. Update di Supabase secrets:
+   ```bash
+   supabase secrets set CASHI_WEBHOOK_SECRET=your_secret_here
+   ```
+3. Redeploy Edge Function:
+   ```bash
+   supabase functions deploy cashi-webhook
+   ```
+
+### Dokumentasi Lengkap
+
+Untuk detail API, sandbox testing, dan troubleshooting lanjutan, lihat [dokumentasi resmi Cashi.id](https://cashi.id/doc).
 
 ---
 
