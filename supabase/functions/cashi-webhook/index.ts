@@ -67,6 +67,66 @@ serve(async (req) => {
       return new Response('OK', { status: 200 });
     }
     
+    // Verify webhook signature using HMAC-SHA256
+    const signature = req.headers.get('X-Signature') || req.headers.get('X-Cashi-Signature');
+    
+    if (!signature) {
+      console.error('Missing webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing signature' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Compute HMAC-SHA256 of request body
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(WEBHOOK_SECRET);
+    const messageData = encoder.encode(body);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Timing-safe comparison
+    const receivedSigBuffer = encoder.encode(signature);
+    const expectedSigBuffer = encoder.encode(expectedSignature);
+    
+    // Ensure both buffers are same length to prevent timing attacks
+    if (receivedSigBuffer.length !== expectedSigBuffer.length) {
+      console.error('Invalid webhook signature: length mismatch');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid signature' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Use crypto.subtle.timingSafeEqual equivalent (XOR comparison)
+    let isValid = true;
+    for (let i = 0; i < receivedSigBuffer.length; i++) {
+      if (receivedSigBuffer[i] !== expectedSigBuffer[i]) {
+        isValid = false;
+      }
+    }
+    
+    if (!isValid) {
+      console.error('Invalid webhook signature: mismatch');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid signature' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Webhook signature verified successfully');
+    
     const payload = JSON.parse(body);
     
     // Log webhook payload
