@@ -87,6 +87,10 @@ export function OrderProvider({ children }) {
 
   // Place a new order (insert into Supabase)
   async function placeOrder(cartItems, customerInfo) {
+    console.log('=== placeOrder called ===');
+    console.log('customerInfo:', customerInfo);
+    console.log('paymentMethod:', customerInfo.paymentMethod);
+    
     // Get or create session token for this customer
     const sessionToken = getSessionToken();
     
@@ -122,7 +126,10 @@ export function OrderProvider({ children }) {
     let paymentUrl = null;
     let paymentId = null;
     
+    console.log('Checking payment method:', customerInfo.paymentMethod);
+    
     if (customerInfo.paymentMethod === 'qris') {
+      console.log('Payment method is QRIS - calling create-cashi-payment...');
       try {
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-cashi-payment', {
           body: {
