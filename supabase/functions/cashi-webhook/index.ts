@@ -8,7 +8,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const WEBHOOK_SECRET = Deno.env.get('CASHI_WEBHOOK_SECRET') || 'sk_02ee564329393b25a5ea0b56bb4e7cb6';
+const WEBHOOK_SECRET = Deno.env.get('CASHI_WEBHOOK_SECRET');
+
+if (!WEBHOOK_SECRET) {
+  throw new Error('CASHI_WEBHOOK_SECRET environment variable is required');
+}
 
 serve(async (req) => {
   // CORS headers
