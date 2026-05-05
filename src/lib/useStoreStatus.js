@@ -59,7 +59,15 @@ export function useStoreStatus() {
     const openMin = openH * 60 + openM;
     const closeMin = closeH * 60 + closeM;
     
-    const isOpenNow = wibMinutes >= openMin && wibMinutes < closeMin;
+    // Handle case where close time is past midnight (e.g., open 08:00, close 00:00 = open until midnight)
+    let isOpenNow;
+    if (closeMin <= openMin) {
+      // Close time is next day (e.g., 08:00 - 00:00 or 22:00 - 02:00)
+      isOpenNow = wibMinutes >= openMin || wibMinutes < closeMin;
+    } else {
+      // Normal case (e.g., 08:00 - 22:00)
+      isOpenNow = wibMinutes >= openMin && wibMinutes < closeMin;
+    }
     
     console.log('Store Hours Check:', {
       openHour,
