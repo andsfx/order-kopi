@@ -245,24 +245,16 @@ export function OrderProvider({ children }) {
     // Get session token to verify ownership
     const sessionToken = getSessionToken();
 
-    // Fetch from DB - RLS policy will ensure only owner or admin can access
+    // Fetch from DB - RLS policy handles access via x-session-token header
     const { data, error } = await supabase
       .from('orders')
       .select('*, order_items(*, products(name, image_url))')
       .eq('id', orderId)
-      .eq('session_token', sessionToken) // Filter by session token
-      .maybeSingle(); // Use maybeSingle to avoid 406 when no rows found
+      .maybeSingle();
 
     if (error) {
       console.error('getOrder error:', error);
-      // If session_token filter fails, try without it (for backwards compatibility)
-      const { data: fallback, error: fallbackError } = await supabase
-        .from('orders')
-        .select('*, order_items(*, products(name, image_url))')
-        .eq('id', orderId)
-        .maybeSingle();
-      if (fallbackError || !fallback) return null;
-      return transformOrder(fallback);
+      return null;
     }
     if (!data) return null;
     return transformOrder(data);
