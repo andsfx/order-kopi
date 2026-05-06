@@ -86,7 +86,7 @@ export function OrderProvider({ children }) {
   }, [fetchOrders]);
 
   // Place a new order (insert into Supabase)
-  async function placeOrder(cartItems, customerInfo) {
+  async function placeOrder(cartItems, customerInfo, appliedVoucher = null, voucherDiscount = 0) {
     // Get or create session token for this customer
     const sessionToken = getSessionToken();
     
@@ -98,9 +98,10 @@ export function OrderProvider({ children }) {
     }
 
     const orderId = counterData;
-    const total = cartItems.reduce((sum, i) => sum + (i.price ?? i.product.price) * i.qty, 0);
+    const subtotal = cartItems.reduce((sum, i) => sum + (i.price ?? i.product.price) * i.qty, 0);
+    const total = Math.max(0, subtotal - voucherDiscount);
 
-    // Insert order with session token
+    // Insert order with session token and voucher
     const { error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -111,7 +112,9 @@ export function OrderProvider({ children }) {
         status: 'pending_payment',
         payment_method: customerInfo.paymentMethod || 'qris',
         branch_id: customerInfo.branchId || null,
-        session_token: sessionToken, // Add session token for order ownership
+        session_token: sessionToken,
+        voucher_id: appliedVoucher?.id || null,
+        discount_amount: voucherDiscount || 0,
       });
 
     if (orderError) {
@@ -178,6 +181,14 @@ export function OrderProvider({ children }) {
       // Rollback: delete orphaned order
       await supabase.from('orders').delete().eq('id', orderId);
       throw new Error('Gagal menyimpan item order: ' + itemsError.message);
+    }
+
+    // Increment voucher usage count if voucher was used
+    if (appliedVoucher) {
+      await supabase
+        .from('vouchers')
+        .update({ usage_count: appliedVoucher.usage_count + 1 })
+        .eq('id', appliedVoucher.id);
     }
 
     // Log order creation to audit log

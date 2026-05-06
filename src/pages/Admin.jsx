@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Coffee, Package, CheckCircle, ChevronRight, CreditCard, Loader2, Ban, Check, UtensilsCrossed, LogOut, BarChart3, Megaphone, Store, MapPin, Settings, FileText } from 'lucide-react';
+import { ArrowLeft, Clock, Coffee, Package, CheckCircle, ChevronRight, CreditCard, Loader2, Ban, Check, UtensilsCrossed, LogOut, BarChart3, Megaphone, Store, MapPin, Settings, FileText, Tag } from 'lucide-react';
 import { useOrders } from '../lib/OrderContext';
 import { useAuth } from '../lib/useAuth';
 import { useStore } from '../lib/useStore';
@@ -125,6 +125,19 @@ export default function Admin() {
             <div className="flex-1">
               <p className="font-semibold text-text-primary text-sm">Kelola Promo</p>
               <p className="text-xs text-text-muted">Tambah, edit, hapus banner promo</p>
+            </div>
+            <ChevronRight size={16} className="text-text-muted" />
+          </Link>
+          <Link
+            to="/admin/voucher"
+            className="w-full bg-white rounded-2xl p-4 shadow-[var(--shadow-card)] flex items-center gap-3 active:scale-[0.98] transition-transform"
+          >
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Tag size={20} className="text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-text-primary text-sm">Kelola Voucher</p>
+              <p className="text-xs text-text-muted">BOGO, diskon Rp, diskon %</p>
             </div>
             <ChevronRight size={16} className="text-text-muted" />
           </Link>

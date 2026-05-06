@@ -14,6 +14,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 const AdminMenu = lazy(() => import('./pages/AdminMenu'));
 const AdminReport = lazy(() => import('./pages/AdminReport'));
 const AdminPromo = lazy(() => import('./pages/AdminPromo'));
+const AdminVoucher = lazy(() => import('./pages/AdminVoucher'));
 const AdminBranch = lazy(() => import('./pages/AdminBranch'));
 const AdminSettings = lazy(() => import('./pages/AdminSettings'));
 const AdminHelp = lazy(() => import('./pages/AdminHelp'));
@@ -78,6 +79,7 @@ function AppContent() {
         <Route path="/admin/menu" element={<ProtectedRoute><AdminMenu /></ProtectedRoute>} />
         <Route path="/admin/report" element={<ProtectedRoute><AdminReport /></ProtectedRoute>} />
         <Route path="/admin/promo" element={<ProtectedRoute><AdminPromo /></ProtectedRoute>} />
+        <Route path="/admin/voucher" element={<ProtectedRoute><AdminVoucher /></ProtectedRoute>} />
         <Route path="/admin/branch" element={<ProtectedRoute><AdminBranch /></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
         <Route path="/admin/audit" element={<ProtectedRoute><AdminAudit /></ProtectedRoute>} />

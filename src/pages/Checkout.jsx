@@ -1,15 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, User, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, User, MessageSquare, Loader2, AlertCircle, Tag, X } from 'lucide-react';
 import { useCart } from '../lib/CartContext';
 import { useOrders } from '../lib/OrderContext';
 import { useStoreStatus } from '../lib/useStoreStatus';
+import { useVoucher } from '../lib/useVoucher';
 import { checkRateLimit, formatTimeRemaining } from '../lib/rateLimit';
+import { useToast } from '../components/Toast';
 
 export default function Checkout() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, subtotal, totalPrice, appliedVoucher, voucherDiscount, applyVoucher, removeVoucher, clearCart } = useCart();
   const { placeOrder } = useOrders();
   const { isOpen, loading: storeLoading } = useStoreStatus();
+  const { validateVoucher, calculateDiscount } = useVoucher();
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   // Redirect to home if store is closed
@@ -22,9 +26,42 @@ export default function Checkout() {
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('qris');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+
+  async function handleApplyVoucher() {
+    if (!voucherCode.trim()) {
+      addToast('Masukkan kode voucher', 'error');
+      return;
+    }
+
+    setApplyingVoucher(true);
+    try {
+      const { valid, voucher, error: voucherError } = await validateVoucher(voucherCode, subtotal);
+      
+      if (!valid) {
+        addToast(voucherError, 'error');
+        return;
+      }
+
+      const discount = calculateDiscount(voucher, items, subtotal);
+      applyVoucher(voucher, discount);
+      addToast(`Voucher ${voucher.code} berhasil digunakan!`);
+      setVoucherCode('');
+    } catch (err) {
+      addToast('Gagal memvalidasi voucher', 'error');
+    } finally {
+      setApplyingVoucher(false);
+    }
+  }
+
+  function handleRemoveVoucher() {
+    removeVoucher();
+    addToast('Voucher dihapus');
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -54,7 +91,7 @@ export default function Checkout() {
         note: note.trim(),
         paymentMethod,
         branchId,
-      });
+      }, appliedVoucher, voucherDiscount);
       clearCart();
       navigate(`/order/${order.id}`);
     } catch (err) {
@@ -121,12 +158,70 @@ export default function Checkout() {
               </div>
             ))}
           </div>
-          <div className="mt-3 pt-3 border-t border-border-light flex items-center justify-between">
-            <span className="font-semibold text-text-primary">Total</span>
-            <span className="text-lg font-bold text-primary">
-              Rp {totalPrice.toLocaleString('id-ID')}
-            </span>
+          <div className="mt-3 pt-3 border-t border-border-light">
+            {voucherDiscount > 0 && (
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-text-secondary">Subtotal</span>
+                <span className="text-text-primary">Rp {subtotal.toLocaleString('id-ID')}</span>
+              </div>
+            )}
+            {voucherDiscount > 0 && (
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-emerald-600 font-medium">Diskon Voucher</span>
+                <span className="text-emerald-600 font-semibold">-Rp {voucherDiscount.toLocaleString('id-ID')}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-text-primary">Total</span>
+              <span className="text-lg font-bold text-primary">
+                Rp {totalPrice.toLocaleString('id-ID')}
+              </span>
+            </div>
           </div>
+        </section>
+
+        {/* Voucher Section */}
+        <section className="mt-4 bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Tag size={18} className="text-primary" />
+            <h2 className="font-bold text-text-primary">Voucher</h2>
+          </div>
+
+          {appliedVoucher ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-emerald-700">{appliedVoucher.code}</p>
+                <p className="text-xs text-emerald-600 mt-0.5">
+                  Hemat Rp {voucherDiscount.toLocaleString('id-ID')}
+                </p>
+              </div>
+              <button
+                onClick={handleRemoveVoucher}
+                className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200 active:scale-95 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={voucherCode}
+                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                placeholder="Masukkan kode voucher"
+                maxLength={50}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-surface-secondary text-sm text-text-primary placeholder:text-text-muted outline-none border border-transparent focus:border-primary/30 uppercase"
+              />
+              <button
+                onClick={handleApplyVoucher}
+                disabled={applyingVoucher || !voucherCode.trim()}
+                className="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100 flex items-center gap-1.5"
+              >
+                {applyingVoucher ? <Loader2 size={14} className="animate-spin" /> : null}
+                Gunakan
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Form */}
