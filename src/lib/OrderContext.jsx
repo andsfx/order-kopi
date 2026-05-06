@@ -183,12 +183,16 @@ export function OrderProvider({ children }) {
       throw new Error('Gagal menyimpan item order: ' + itemsError.message);
     }
 
-    // Increment voucher usage count if voucher was used
+    // Increment voucher usage count if voucher was used (atomic to prevent race condition)
     if (appliedVoucher) {
-      await supabase
-        .from('vouchers')
-        .update({ usage_count: appliedVoucher.usage_count + 1 })
-        .eq('id', appliedVoucher.id);
+      const { error: voucherError } = await supabase.rpc('increment_voucher_usage', { 
+        p_voucher_id: appliedVoucher.id 
+      });
+      
+      if (voucherError) {
+        console.error('Failed to increment voucher usage:', voucherError);
+        // Don't fail the order, just log the error
+      }
     }
 
     // Log order creation to audit log

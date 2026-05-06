@@ -66,6 +66,8 @@ create table orders (
   payment_url text,
   paid_at timestamptz,
   session_token text, -- Anonymous session token for order tracking
+  voucher_id bigint, -- FK to vouchers table
+  discount_amount int default 0, -- Discount applied from voucher
   created_at timestamptz not null default now()
 );
 
@@ -101,7 +103,82 @@ create policy "Authenticated users can delete orders"
   on orders for delete using (auth.role() = 'authenticated');
 
 -- ============================================
--- 4. Order Items
+-- 5. Vouchers
+-- ============================================
+create table vouchers (
+  id bigint generated always as identity primary key,
+  code varchar(50) unique not null,
+  type varchar(20) not null check (type in ('bogo', 'fixed', 'percentage')),
+  discount_value int not null default 0,
+  min_purchase int not null default 0,
+  usage_limit int not null default 1,
+  usage_count int not null default 0,
+  valid_from timestamptz not null,
+  valid_to timestamptz not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table vouchers enable row level security;
+
+-- Policy: Anyone can view active vouchers (for validation)
+create policy "Anyone can view active vouchers"
+  on vouchers for select using (is_active = true);
+
+-- Policy: Authenticated users can manage vouchers
+create policy "Authenticated users can manage vouchers"
+  on vouchers for all using (auth.role() = 'authenticated');
+
+-- Add foreign key constraint to orders table
+alter table orders
+  add constraint fk_orders_voucher
+  foreign key (voucher_id) references vouchers(id) on delete set null;
+
+-- Create indexes for faster lookups
+create index idx_vouchers_code on vouchers(code);
+create index idx_vouchers_active on vouchers(is_active);
+create index idx_orders_voucher_id on orders(voucher_id);
+
+-- Create trigger to update updated_at timestamp
+create or replace function update_voucher_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger trigger_update_voucher_timestamp
+before update on vouchers
+for each row
+execute function update_voucher_updated_at();
+
+-- Atomic increment function to prevent race condition
+create or replace function increment_voucher_usage(p_voucher_id bigint)
+returns void as $$
+begin
+  update vouchers 
+  set usage_count = usage_count + 1 
+  where id = p_voucher_id 
+  and usage_count < usage_limit;
+  
+  if not found then
+    raise exception 'Voucher usage limit reached';
+  end if;
+end;
+$$ language plpgsql security definer;
+
+-- Insert sample vouchers
+insert into vouchers (code, type, discount_value, min_purchase, usage_limit, valid_from, valid_to, is_active)
+values 
+  ('BOGO50', 'bogo', 0, 50000, 100, now(), now() + interval '30 days', true),
+  ('DISKON10K', 'fixed', 10000, 30000, 50, now(), now() + interval '30 days', true),
+  ('HEMAT20', 'percentage', 20, 40000, 75, now(), now() + interval '30 days', true)
+on conflict (code) do nothing;
+
+-- ============================================
+-- 6. Order Items
 -- ============================================
 create table order_items (
   id bigint generated always as identity primary key,
