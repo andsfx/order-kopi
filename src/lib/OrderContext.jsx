@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabase';
 import { getSessionToken } from './sessionToken';
+import { generateUniqueCode } from './generateUniqueCode';
 import { logOrderCreation, logStatusChange } from './auditLog';
 
 const OrderContext = createContext(null);
@@ -99,16 +100,24 @@ export function OrderProvider({ children }) {
 
     const orderId = counterData;
     const subtotal = cartItems.reduce((sum, i) => sum + (i.price ?? i.product.price) * i.qty, 0);
-    const total = Math.max(0, subtotal - voucherDiscount);
+    const finalTotal = Math.max(0, subtotal - voucherDiscount);
 
-    // Insert order with session token and voucher
+    // Generate 4-digit unique code for QRIS Static payment verification
+    // IMPORTANT: Use finalTotal (after discount) for unique code calculation
+    const uniqueCode = generateUniqueCode(orderId, finalTotal);
+    const amountToPay = finalTotal + parseInt(uniqueCode);
+
+    // Insert order with session token, voucher, and unique code
     const { error: orderError } = await supabase
       .from('orders')
       .insert({
         id: orderId,
         customer_name: customerInfo.name,
         note: customerInfo.note || null,
-        total,
+        total: finalTotal,
+        unique_code: uniqueCode,
+        amount_to_pay: amountToPay,
+        discount_amount: voucherDiscount || 0,
         status: 'pending_payment',
         payment_method: customerInfo.paymentMethod || 'qris',
         branch_id: customerInfo.branchId || null,
@@ -233,6 +242,33 @@ export function OrderProvider({ children }) {
     // Log status change to audit log
     if (oldStatus && oldStatus !== newStatus) {
       await logStatusChange(orderId, oldStatus, newStatus, 'admin');
+      
+      // Log manual verification events
+      if (oldStatus === 'pending_verification' && newStatus === 'paid') {
+        await supabase
+          .from('audit_logs')
+          .insert({
+            order_id: orderId,
+            event_type: 'manual_verification_approved',
+            event_data: {
+              previous_status: oldStatus,
+              new_status: newStatus
+            },
+            actor_type: 'admin'
+          });
+      } else if (oldStatus === 'pending_verification' && newStatus === 'cancelled') {
+        await supabase
+          .from('audit_logs')
+          .insert({
+            order_id: orderId,
+            event_type: 'manual_verification_rejected',
+            event_data: {
+              previous_status: oldStatus,
+              new_status: newStatus
+            },
+            actor_type: 'admin'
+          });
+      }
     }
 
     // Optimistic update
@@ -265,8 +301,63 @@ export function OrderProvider({ children }) {
     return transformOrder(data);
   }, [orders]);
 
+  // Upload payment proof and verify payment
+  async function uploadPaymentProof(orderId, file, amountEntered) {
+    try {
+      const sessionToken = getSessionToken();
+      
+      // 1. Upload file to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${orderId}_${Date.now()}.${fileExt}`;
+      const filePath = `payment-proofs/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('order-attachments')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw new Error('Gagal upload bukti pembayaran: ' + uploadError.message);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('order-attachments')
+        .getPublicUrl(filePath);
+
+      // 2. Call verify-payment Edge Function
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: {
+          orderId,
+          paymentProofUrl: publicUrl,
+          amountEntered: parseInt(amountEntered, 10),
+          sessionToken
+        }
+      });
+
+      if (error) {
+        throw new Error('Gagal verifikasi pembayaran: ' + error.message);
+      }
+
+      // 3. Return result
+      return {
+        success: data.success,
+        autoVerified: data.auto_verified,
+        needsManualReview: data.needs_manual_review,
+        fraudScore: data.fraud_score,
+        message: data.message,
+        error: data.error
+      };
+    } catch (error) {
+      console.error('Upload payment proof error:', error);
+      throw error;
+    }
+  }
+
   return (
-    <OrderContext.Provider value={{ orders, loading, placeOrder, updateStatus, getOrder, fetchOrders }}>
+    <OrderContext.Provider value={{ orders, loading, placeOrder, updateStatus, getOrder, fetchOrders, uploadPaymentProof }}>
       {children}
     </OrderContext.Provider>
   );

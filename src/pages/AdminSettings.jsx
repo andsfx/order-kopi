@@ -65,6 +65,21 @@ export default function AdminSettings() {
       .getPublicUrl(fileName);
 
     await updateSetting(key, urlData.publicUrl);
+    
+    // Log QRIS image update to audit_logs
+    if (key === 'qris_image') {
+      await supabase
+        .from('audit_logs')
+        .insert({
+          event_type: 'qris_image_updated',
+          event_data: {
+            new_url: urlData.publicUrl,
+            file_name: fileName
+          },
+          actor_type: 'admin'
+        });
+    }
+    
     setUploading(false);
     addToast('Gambar berhasil diupload');
   }
@@ -91,6 +106,29 @@ export default function AdminSettings() {
     setNewPassword('');
     setConfirmPassword('');
     addToast('Password berhasil diubah');
+  }
+
+  async function handleDeleteQris() {
+    // Check if there are pending orders before allowing deletion
+    const { data: pendingOrders, error } = await supabase
+      .from('orders')
+      .select('id')
+      .in('status', ['pending_payment', 'pending_verification'])
+      .limit(1);
+
+    if (error) {
+      addToast('Gagal memeriksa pesanan', 'error');
+      return;
+    }
+
+    if (pendingOrders && pendingOrders.length > 0) {
+      addToast('Tidak dapat menghapus QRIS. Masih ada pesanan yang menunggu pembayaran atau verifikasi.', 'error');
+      return;
+    }
+
+    // Proceed with deletion
+    await updateSetting('qris_image', null);
+    addToast('QRIS berhasil dihapus');
   }
 
   async function handleResetData() {
@@ -194,6 +232,15 @@ export default function AdminSettings() {
                     onChange={(e) => handleUploadFile(e.target.files[0], 'qris_image', setUploadingQris)}
                   />
                 </label>
+                {settings.qris_image && (
+                  <button
+                    onClick={handleDeleteQris}
+                    className="inline-flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2.5 rounded-xl text-sm font-medium active:scale-95 transition-transform hover:bg-red-100"
+                  >
+                    <Trash2 size={16} />
+                    Hapus QRIS
+                  </button>
+                )}
                 <p className="text-xs text-text-muted">Format: JPG, PNG. Maks 5MB</p>
               </div>
             </div>

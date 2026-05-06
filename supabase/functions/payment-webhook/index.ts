@@ -1,13 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramNotification, formatOrderNotification } from '../_shared/telegram.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   // bayar.gg sends POST with JSON body on successful payment
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
   try {
@@ -27,7 +33,7 @@ Deno.serve(async (req) => {
       console.log('Ignoring non-paid webhook:', status, event);
       return new Response(JSON.stringify({ received: true, action: 'ignored' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -45,7 +51,7 @@ Deno.serve(async (req) => {
       // Try matching by description (fallback)
       return new Response(
         JSON.stringify({ received: true, error: 'Order not found' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -83,13 +89,13 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ received: true, order_id: order.id, new_status: 'paid' }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     console.error('Webhook error:', err);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
