@@ -1,6 +1,6 @@
-# Order Kopi
+﻿# Order Kopi
 
-**Aplikasi pemesanan kopi online untuk coffee shop — siap pakai, mudah dikustomisasi.**
+**Aplikasi pemesanan kopi online untuk coffee shop â€” siap pakai, mudah dikustomisasi.**
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev)
@@ -9,7 +9,7 @@
 
 ---
 
-## 📸 Screenshots
+## ðŸ“¸ Screenshots
 
 > **Catatan:** Tambahkan screenshot aplikasi Anda di folder `screenshots/` dan update link di bawah ini.
 
@@ -33,21 +33,21 @@
 
 ---
 
-## ✨ Mengapa Order Kopi?
+## âœ¨ Mengapa Order Kopi?
 
-### 🚀 Siap Produksi
+### ðŸš€ Siap Produksi
 - **Production-Ready:** Security hardening lengkap (webhook signature, RLS policies, rate limiting)
 - **Scalable Architecture:** Supabase PostgreSQL + Edge Functions untuk performa optimal
 - **Zero Downtime:** Real-time updates tanpa refresh halaman
 - **PWA Support:** Install di HP seperti aplikasi native
 
-### 💰 Hemat Biaya
+### ðŸ’° Hemat Biaya
 - **Gratis untuk Mulai:** Supabase free tier (500K requests/bulan) + Vercel/Netlify hosting gratis
 - **No Monthly Fee:** Tidak ada biaya bulanan untuk infrastruktur dasar
 - **Pay As You Grow:** Bayar hanya saat traffic meningkat
 - **Open Source:** Tidak ada biaya lisensi, customize sesuka hati
 
-### 🔒 Keamanan Enterprise
+### ðŸ”’ Keamanan Enterprise
 - **Webhook Signature Verification:** HMAC-SHA256 untuk validasi payment webhook
 - **Row Level Security (RLS):** Database-level isolation antar customer
 - **Rate Limiting:** Server-side protection (10 req/min per IP)
@@ -55,28 +55,33 @@
 - **Session Token Security:** Setiap customer punya token unik dengan auto-refresh
 - **Audit Trail:** Immutable log untuk semua perubahan order
 
-### ⚡ Developer Experience
+### âš¡ Developer Experience
 - **Modern Stack:** React 19 + Vite 8 + Tailwind CSS 4
 - **Type Safety:** Full TypeScript support (opsional)
 - **Hot Reload:** Instant feedback saat development
 - **Easy Deployment:** One-click deploy ke Vercel/Netlify
 - **Comprehensive Docs:** Setup guide, troubleshooting, dan API reference lengkap
 
-### 🎯 Fitur Bisnis
+### ðŸŽ¯ Fitur Bisnis
 - **Multi-Branch:** Kelola beberapa cabang toko dalam satu aplikasi
 - **Dynamic Pricing:** Harga berbeda per ukuran dan customization
+- **Product Discount:** Diskon % per produk dengan harga coret
+- **Voucher System:** BOGO, Fixed Rp, dan Percentage discount
+  - Validasi otomatis (expiry, usage limit, min purchase)
+  - Atomic increment untuk prevent race condition
+  - Track usage per voucher
 - **Promo Management:** Banner promo dengan scheduling
 - **Sales Analytics:** Laporan penjualan harian dengan grafik per jam
 - **Customer Insights:** Rating, review, dan feedback tracking
 - **WhatsApp Integration:** Share order link via WhatsApp
 
-### 🔄 Payment Flexibility
+### ðŸ”„ Payment Flexibility
 - **Dynamic QRIS:** Generate QRIS unik per transaksi via Cashi.id
 - **Auto-Confirmation:** Webhook otomatis update status pembayaran (<2 detik)
 - **Cash Payment:** Fallback untuk bayar di kasir
 - **Payment Tracking:** Audit log lengkap untuk setiap transaksi
 
-### 📱 Mobile-First Design
+### ðŸ“± Mobile-First Design
 - **Responsive:** Optimal di semua ukuran layar (mobile, tablet, desktop)
 - **Touch-Friendly:** UI dirancang untuk interaksi touch
 - **Fast Loading:** Optimized assets dan lazy loading
@@ -84,9 +89,9 @@
 
 ---
 
-## 🎯 Use Cases
+## ðŸŽ¯ Use Cases
 
-### Coffee Shop / Café
+### Coffee Shop / CafÃ©
 - Kurangi antrian kasir dengan self-order
 - Customer bisa order dari meja (scan QR code)
 - Notifikasi otomatis saat pesanan siap
@@ -108,24 +113,24 @@
 
 ---
 
-## 🏆 Kelebihan Dibanding Kompetitor
+## ðŸ† Kelebihan Dibanding Kompetitor
 
 | Fitur | Order Kopi | Kompetitor A | Kompetitor B |
 |-------|------------|--------------|--------------|
 | **Biaya Setup** | Gratis | $99/bulan | $49/bulan |
-| **Dynamic QRIS** | ✅ Via Cashi.id | ❌ Static only | ✅ Via Midtrans |
-| **Auto-Confirm Payment** | ✅ Webhook | ❌ Manual | ✅ Webhook |
-| **Rate Limiting** | ✅ Server-side | ❌ None | ✅ Client-side |
-| **Audit Logging** | ✅ Immutable | ❌ None | ⚠️ Basic |
-| **Multi-Branch** | ✅ Built-in | ⚠️ Add-on | ✅ Built-in |
-| **PWA Support** | ✅ Yes | ❌ No | ✅ Yes |
-| **Open Source** | ✅ MIT License | ❌ Proprietary | ❌ Proprietary |
-| **Customizable** | ✅ Full access | ⚠️ Limited | ❌ No |
-| **Self-Hosted** | ✅ Yes | ❌ No | ❌ No |
+| **Dynamic QRIS** | âœ… Via Cashi.id | âŒ Static only | âœ… Via Midtrans |
+| **Auto-Confirm Payment** | âœ… Webhook | âŒ Manual | âœ… Webhook |
+| **Rate Limiting** | âœ… Server-side | âŒ None | âœ… Client-side |
+| **Audit Logging** | âœ… Immutable | âŒ None | âš ï¸ Basic |
+| **Multi-Branch** | âœ… Built-in | âš ï¸ Add-on | âœ… Built-in |
+| **PWA Support** | âœ… Yes | âŒ No | âœ… Yes |
+| **Open Source** | âœ… MIT License | âŒ Proprietary | âŒ Proprietary |
+| **Customizable** | âœ… Full access | âš ï¸ Limited | âŒ No |
+| **Self-Hosted** | âœ… Yes | âŒ No | âŒ No |
 
 ---
 
-## 📊 Tech Stack
+## ðŸ“Š Tech Stack
 
 ### Frontend
 - **React 19** - UI library dengan concurrent features
@@ -154,21 +159,33 @@
 
 ### Pelanggan
 - Lihat menu dengan kategori dan pencarian
+- **Diskon Produk:** Harga coret + badge diskon (e.g., -20%)
 - Pilih ukuran (Small/Regular/Large), suhu (Hot/Iced), dan level gula
 - Keranjang belanja dengan quantity adjustment
+- **Voucher System:** Input kode voucher untuk diskon tambahan
+  - Buy 1 Get 1 (BOGO) - Item termurah gratis
+  - Fixed Discount (Rp) - Potongan harga tetap
+  - Percentage Discount (%) - Potongan persentase
 - Checkout dengan QRIS dinamis (via Cashi.id) atau bayar di kasir (cash)
-- Tracking status pesanan real-time (Bayar → Menunggu → Diproses → Siap → Selesai)
+- Tracking status pesanan real-time (Bayar â†’ Menunggu â†’ Diproses â†’ Siap â†’ Selesai)
 - Estimasi waktu tunggu + posisi antrian
 - Rating & review setelah pesanan selesai
 - Share pesanan via WhatsApp
 - Pilih cabang toko
 - Banner promo dinamis
-- PWA — bisa di-install di HP
+- PWA â€” bisa di-install di HP
 
 ### Admin
 - Dashboard pesanan real-time dengan filter status
-- Update status pesanan (konfirmasi bayar → proses → siap → selesai)
+- Update status pesanan (konfirmasi bayar â†’ proses â†’ siap â†’ selesai)
 - Kelola menu (CRUD produk + kategori, upload foto)
+- **Kelola Diskon Produk:** Set diskon % per produk dengan preview harga
+- **Kelola Voucher:** CRUD voucher dengan tipe BOGO/Fixed/Percentage
+  - Set kode voucher (e.g., BOGO50, DISKON10K)
+  - Atur minimum pembelian
+  - Batasi jumlah penggunaan (usage limit)
+  - Periode valid (dari-sampai tanggal)
+  - Track usage real-time (X/Y digunakan)
 - Kelola cabang toko
 - Kelola promo/banner
 - Laporan penjualan harian (revenue, top items, grafik per jam)
@@ -222,7 +239,7 @@ npm install
 
 #### Untuk Database Baru:
 
-1. Buka [supabase.com](https://supabase.com) → buat project baru
+1. Buka [supabase.com](https://supabase.com) â†’ buat project baru
 2. Tunggu project selesai dibuat (~1 menit)
 3. Buka **SQL Editor** (menu kiri)
 4. Klik **"New query"**
@@ -249,8 +266,8 @@ where table_name = 'orders' and column_name = 'session_token';
 
 ### Langkah 3: Buat Admin User
 
-1. Di Supabase Dashboard, buka **Authentication** → **Users**
-2. Klik **"Add user"** → **"Create new user"**
+1. Di Supabase Dashboard, buka **Authentication** â†’ **Users**
+2. Klik **"Add user"** â†’ **"Create new user"**
 3. Isi:
    - **Email:** email kamu (contoh: admin@tokoku.com)
    - **Password:** password yang kuat (minimal 6 karakter)
@@ -263,7 +280,7 @@ where table_name = 'orders' and column_name = 'session_token';
 
 ### Langkah 4: Ambil API Keys
 
-1. Di Supabase Dashboard, buka **Settings** → **API**
+1. Di Supabase Dashboard, buka **Settings** â†’ **API**
 2. Catat/copy:
    - **Project URL** (contoh: `https://abcdefgh.supabase.co`)
    - **anon public key** (string panjang yang dimulai dengan `eyJ...`)
@@ -323,7 +340,7 @@ Saat ditanya:
 - Build command: `npm run build`
 - Publish directory: `dist`
 
-Set environment variables di Netlify Dashboard → Site settings → Environment variables:
+Set environment variables di Netlify Dashboard â†’ Site settings â†’ Environment variables:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
@@ -336,7 +353,7 @@ netlify deploy --prod
 ### Cara 2: Via GitHub (Auto Deploy)
 
 1. Push repo ke GitHub
-2. Di Netlify, klik **"Add new site"** → **"Import an existing project"**
+2. Di Netlify, klik **"Add new site"** â†’ **"Import an existing project"**
 3. Pilih repo GitHub kamu
 4. Set build settings:
    - Build command: `npm run build`
@@ -351,8 +368,8 @@ Setiap push ke branch `main` akan otomatis deploy.
 ## Deploy Edge Functions (Opsional)
 
 Edge Functions menyediakan fitur tambahan:
-- **confirm-payment** — Notifikasi Telegram saat pembayaran dikonfirmasi
-- **auto-cancel** — Otomatis batalkan pesanan yang tidak dibayar dalam 15 menit
+- **confirm-payment** â€” Notifikasi Telegram saat pembayaran dikonfirmasi
+- **auto-cancel** â€” Otomatis batalkan pesanan yang tidak dibayar dalam 15 menit
 
 ### Setup:
 
@@ -374,7 +391,7 @@ npx supabase functions deploy confirm-payment --no-verify-jwt
 npx supabase functions deploy auto-cancel --no-verify-jwt
 ```
 
-> **Catatan:** Untuk auto-cancel, setup Cron Job di Supabase Dashboard → Database → Extensions → pg_cron, atau panggil endpoint secara berkala.
+> **Catatan:** Untuk auto-cancel, setup Cron Job di Supabase Dashboard â†’ Database â†’ Extensions â†’ pg_cron, atau panggil endpoint secara berkala.
 
 ---
 
@@ -382,32 +399,32 @@ npx supabase functions deploy auto-cancel --no-verify-jwt
 
 ```
 order-kopi/
-├── public/              # Static assets (favicon, manifest, QRIS placeholder)
-├── src/
-│   ├── components/      # Komponen reusable (Cart, Toast, ProductCard, dll)
-│   ├── lib/             # Context, hooks, dan utility (Auth, Cart, Orders, Store)
-│   ├── pages/           # Halaman aplikasi
-│   │   ├── Home.jsx         # Menu pelanggan
-│   │   ├── Checkout.jsx     # Halaman checkout
-│   │   ├── OrderStatus.jsx  # Tracking pesanan real-time
-│   │   ├── Login.jsx        # Login admin
-│   │   ├── Admin.jsx        # Dashboard admin
-│   │   ├── AdminMenu.jsx    # Kelola menu
-│   │   ├── AdminBranch.jsx  # Kelola cabang
-│   │   ├── AdminPromo.jsx   # Kelola promo
-│   │   ├── AdminReport.jsx  # Laporan penjualan
-│   │   ├── AdminSettings.jsx # Pengaturan toko
-│   │   └── SetupWizard.jsx  # Setup awal toko
-│   ├── App.jsx          # Router & providers
-│   ├── main.jsx         # Entry point
-│   └── index.css        # Tailwind + custom CSS variables
-├── supabase/
-│   ├── setup.sql        # Database setup (jalankan di SQL Editor)
-│   └── functions/       # Edge Functions (opsional)
-├── .env.example         # Template environment variables
-├── netlify.toml         # Konfigurasi Netlify
-├── package.json
-└── vite.config.js
+â”œâ”€â”€ public/              # Static assets (favicon, manifest, QRIS placeholder)
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ components/      # Komponen reusable (Cart, Toast, ProductCard, dll)
+â”‚   â”œâ”€â”€ lib/             # Context, hooks, dan utility (Auth, Cart, Orders, Store)
+â”‚   â”œâ”€â”€ pages/           # Halaman aplikasi
+â”‚   â”‚   â”œâ”€â”€ Home.jsx         # Menu pelanggan
+â”‚   â”‚   â”œâ”€â”€ Checkout.jsx     # Halaman checkout
+â”‚   â”‚   â”œâ”€â”€ OrderStatus.jsx  # Tracking pesanan real-time
+â”‚   â”‚   â”œâ”€â”€ Login.jsx        # Login admin
+â”‚   â”‚   â”œâ”€â”€ Admin.jsx        # Dashboard admin
+â”‚   â”‚   â”œâ”€â”€ AdminMenu.jsx    # Kelola menu
+â”‚   â”‚   â”œâ”€â”€ AdminBranch.jsx  # Kelola cabang
+â”‚   â”‚   â”œâ”€â”€ AdminPromo.jsx   # Kelola promo
+â”‚   â”‚   â”œâ”€â”€ AdminReport.jsx  # Laporan penjualan
+â”‚   â”‚   â”œâ”€â”€ AdminSettings.jsx # Pengaturan toko
+â”‚   â”‚   â””â”€â”€ SetupWizard.jsx  # Setup awal toko
+â”‚   â”œâ”€â”€ App.jsx          # Router & providers
+â”‚   â”œâ”€â”€ main.jsx         # Entry point
+â”‚   â””â”€â”€ index.css        # Tailwind + custom CSS variables
+â”œâ”€â”€ supabase/
+â”‚   â”œâ”€â”€ setup.sql        # Database setup (jalankan di SQL Editor)
+â”‚   â””â”€â”€ functions/       # Edge Functions (opsional)
+â”œâ”€â”€ .env.example         # Template environment variables
+â”œâ”€â”€ netlify.toml         # Konfigurasi Netlify
+â”œâ”€â”€ package.json
+â””â”€â”€ vite.config.js
 ```
 
 ---
@@ -426,16 +443,16 @@ Ganti dengan warna yang kamu inginkan.
 
 ### Ganti Font
 
-1. Edit `index.html` — ganti link Google Fonts
-2. Edit `src/index.css` — ganti `--font-sans`
+1. Edit `index.html` â€” ganti link Google Fonts
+2. Edit `src/index.css` â€” ganti `--font-sans`
 
 ### Tambah Menu
 
-Login sebagai admin → **Kelola Menu** → klik tombol **"+"** untuk tambah produk baru.
+Login sebagai admin â†’ **Kelola Menu** â†’ klik tombol **"+"** untuk tambah produk baru.
 
 ### Tambah Cabang
 
-Login sebagai admin → **Kelola Cabang** → tambah cabang baru.
+Login sebagai admin â†’ **Kelola Cabang** â†’ tambah cabang baru.
 
 ---
 
@@ -465,10 +482,10 @@ Order Kopi menggunakan **session token** untuk melindungi privasi customer tanpa
 4. Token expire otomatis setelah 24 jam
 
 **Keuntungan:**
-- ✅ Tidak perlu registrasi/login
-- ✅ Order terisolasi per device
-- ✅ Mencegah orang lain lihat/manipulasi order kamu
-- ✅ Admin tetap bisa lihat semua order
+- âœ… Tidak perlu registrasi/login
+- âœ… Order terisolasi per device
+- âœ… Mencegah orang lain lihat/manipulasi order kamu
+- âœ… Admin tetap bisa lihat semua order
 
 ### Rate Limiting
 
@@ -494,14 +511,14 @@ cat SECURITY_TESTING.md
 ```
 
 **Test yang harus dilakukan:**
-1. ✅ Session token generation
-2. ✅ Order ownership isolation
-3. ✅ Prevent unauthorized updates
-4. ✅ Admin access verification
-5. ✅ Rate limiting
-6. ✅ Token expiry
-7. ✅ Cross-browser isolation
-8. ✅ Cancel order security
+1. âœ… Session token generation
+2. âœ… Order ownership isolation
+3. âœ… Prevent unauthorized updates
+4. âœ… Admin access verification
+5. âœ… Rate limiting
+6. âœ… Token expiry
+7. âœ… Cross-browser isolation
+8. âœ… Cancel order security
 
 ---
 
@@ -514,7 +531,7 @@ Order Kopi menggunakan [Cashi.id](https://cashi.id) untuk generate QRIS dinamis 
 1. **Daftar akun** di [Cashi.id](https://cashi.id)
 2. **Dapatkan API Key:**
    - Login ke dashboard Cashi.id
-   - Buka menu **Settings** → **API Keys**
+   - Buka menu **Settings** â†’ **API Keys**
    - Copy API Key kamu
 3. **Dapatkan Webhook Secret:**
    - Di dashboard Cashi.id, buka **Webhooks**
@@ -556,11 +573,11 @@ Webhook digunakan untuk update status pembayaran secara otomatis saat customer b
 
 ### Cara Kerja
 
-1. **Customer checkout** → Frontend hit API Cashi.id untuk generate QRIS
-2. **QRIS ditampilkan** → Customer scan & bayar
-3. **Cashi.id kirim webhook** → Edge Function terima notifikasi
-4. **Status order terupdate** → Dari "Bayar" jadi "Menunggu"
-5. **Admin ternotifikasi** → Order masuk queue untuk diproses
+1. **Customer checkout** â†’ Frontend hit API Cashi.id untuk generate QRIS
+2. **QRIS ditampilkan** â†’ Customer scan & bayar
+3. **Cashi.id kirim webhook** â†’ Edge Function terima notifikasi
+4. **Status order terupdate** â†’ Dari "Bayar" jadi "Menunggu"
+5. **Admin ternotifikasi** â†’ Order masuk queue untuk diproses
 
 ### Troubleshooting Cashi.id
 
@@ -569,7 +586,7 @@ Webhook digunakan untuk update status pembayaran secara otomatis saat customer b
 **Penyebab:** API Key salah atau tidak diset
 
 **Solusi:**
-1. Cek `.env` → pastikan `VITE_CASHI_API_KEY` terisi
+1. Cek `.env` â†’ pastikan `VITE_CASHI_API_KEY` terisi
 2. Restart dev server: `npm run dev`
 3. Verifikasi API Key di dashboard Cashi.id
 
@@ -605,6 +622,117 @@ Webhook digunakan untuk update status pembayaran secara otomatis saat customer b
 
 Untuk detail API, sandbox testing, dan troubleshooting lanjutan, lihat [dokumentasi resmi Cashi.id](https://cashi.id/doc).
 
+
+
+---
+
+## Sistem Voucher
+
+Order Kopi mendukung 3 jenis voucher untuk meningkatkan penjualan dan customer engagement.
+
+### Jenis Voucher
+
+#### 1. Buy 1 Get 1 (BOGO)
+- Customer beli 2 item, item termurah gratis
+- Berlaku kelipatan (beli 4 = 2 gratis, beli 6 = 3 gratis)
+- Cocok untuk promo hari spesial (tanggal 25, weekend, dll)
+
+**Contoh:**
+- Beli 2 Cappuccino @ Rp 25.000 → Bayar Rp 25.000 (1 gratis)
+- Beli Cappuccino (Rp 25.000) + Latte (Rp 30.000) → Bayar Rp 30.000 (Cappuccino gratis)
+
+#### 2. Fixed Discount (Rp)
+- Potongan harga tetap dari total belanja
+- Bisa set minimum pembelian
+
+**Contoh:**
+- Voucher DISKON10K: Diskon Rp 10.000 (min. belanja Rp 30.000)
+- Total Rp 50.000 → Bayar Rp 40.000
+
+#### 3. Percentage Discount (%)
+- Potongan persentase dari total belanja
+- Bisa set minimum pembelian
+
+**Contoh:**
+- Voucher HEMAT20: Diskon 20% (min. belanja Rp 40.000)
+- Total Rp 50.000 → Bayar Rp 40.000
+
+### Cara Membuat Voucher (Admin)
+
+1. Login ke Admin Panel
+2. Klik **Kelola Voucher** di menu utama
+3. Klik **Tambah Voucher**
+4. Isi form:
+   - **Kode Voucher:** Huruf kapital, tanpa spasi (e.g., BOGO50, DISKON10K)
+   - **Tipe:** Pilih BOGO / Fixed Rp / Percentage %
+   - **Nilai Diskon:** 
+     - BOGO: Kosongkan (otomatis item termurah gratis)
+     - Fixed: Masukkan nominal (e.g., 10000 untuk Rp 10.000)
+     - Percentage: Masukkan angka 1-100 (e.g., 20 untuk 20%)
+   - **Minimum Pembelian:** Rp 0 = tidak ada minimum
+   - **Batas Penggunaan:** Berapa kali voucher bisa dipakai (e.g., 100)
+   - **Periode Valid:** Dari tanggal X sampai tanggal Y
+5. Klik **Simpan**
+
+### Cara Menggunakan Voucher (Customer)
+
+1. Tambahkan item ke keranjang
+2. Klik **Lanjut ke Checkout**
+3. Di bagian **Punya Voucher?**, masukkan kode voucher
+4. Klik **Gunakan**
+5. Jika valid, diskon otomatis teraplikasi:
+   - Subtotal: Rp 62.000
+   - Diskon (BOGO50): -Rp 29.000
+   - **Total: Rp 33.000**
+6. Lanjutkan checkout seperti biasa
+
+### Validasi Voucher
+
+Sistem otomatis validasi:
+- ✅ Kode voucher benar
+- ✅ Voucher masih aktif (belum expired)
+- ✅ Belum mencapai batas penggunaan
+- ✅ Total belanja memenuhi minimum pembelian
+
+Jika tidak valid, muncul error:
+- ❌ "Kode voucher tidak ditemukan"
+- ❌ "Voucher sudah kadaluarsa"
+- ❌ "Voucher sudah habis digunakan"
+- ❌ "Minimum pembelian Rp 50.000"
+
+### Tracking Voucher
+
+Admin bisa monitor penggunaan voucher:
+- **Usage Count:** Berapa kali sudah dipakai (e.g., 45/100)
+- **Status:** Active / Inactive
+- **Periode:** Valid dari - sampai
+- **Total Discount:** Berapa total diskon yang diberikan (via Laporan)
+
+### Sample Vouchers
+
+Setelah setup, database sudah include 3 sample vouchers:
+
+| Kode | Tipe | Diskon | Min. Belanja | Limit | Periode |
+|------|------|--------|--------------|-------|---------|
+| BOGO50 | BOGO | Item termurah gratis | Rp 50.000 | 100x | 30 hari |
+| DISKON10K | Fixed | Rp 10.000 | Rp 30.000 | 50x | 30 hari |
+| HEMAT20 | Percentage | 20% | Rp 40.000 | 75x | 30 hari |
+
+### Technical Details
+
+**Database:**
+- Tabel \ouchers\ dengan kolom: code, type, discount_value, min_purchase, usage_limit, usage_count, valid_from, valid_to
+- Atomic increment untuk prevent race condition (2 user pakai voucher bersamaan)
+- RLS policies: customer view active vouchers, admin manage all
+
+**Integration:**
+- \useVoucher\ hook untuk validasi dan kalkulasi diskon
+- \CartContext\ menyimpan applied voucher + discount amount
+- \OrderContext\ save voucher_id ke order + increment usage_count
+- Voucher discount tampil di Cart Drawer dan Checkout page
+
+
+
 ---
 
 ## Troubleshooting
@@ -635,7 +763,7 @@ localStorage.removeItem('order_rate_limit');
 
 **Solusi:**
 1. Pastikan sudah login sebagai admin
-2. Cek di Supabase Dashboard → Authentication → Users
+2. Cek di Supabase Dashboard â†’ Authentication â†’ Users
 3. Verifikasi RLS policies aktif:
 ```sql
 select policyname from pg_policies where tablename = 'orders';
@@ -658,7 +786,7 @@ where table_name = 'orders' and column_name = 'session_token';
 
 ## Lisensi
 
-MIT License — bebas digunakan untuk keperluan komersial maupun personal.
+MIT License â€” bebas digunakan untuk keperluan komersial maupun personal.
 
 ---
 
