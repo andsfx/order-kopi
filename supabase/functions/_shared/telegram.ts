@@ -45,10 +45,10 @@ export function formatOrderNotification(order: {
   note: string | null;
   total: number;
   payment_method?: string;
-  items: Array<{ product_name: string; qty: number; size: string; temp: string; sugar: string; price_at_order: number }>;
+  items: Array<{ product_name: string; qty: number; size: string; sweetness: string; ice_cube: string; price_at_order: number }>;
 }) {
   const itemLines = order.items
-    .map((i) => `  • ${i.product_name} ×${i.qty} (${i.size}, ${i.temp}, ${i.sugar}) — Rp ${(i.price_at_order * i.qty).toLocaleString('id-ID')}`)
+    .map((i) => `  • ${i.product_name} ×${i.qty} (${i.size}, ${i.sweetness}, ${i.ice_cube}) — Rp ${(i.price_at_order * i.qty).toLocaleString('id-ID')}`)
     .join('\n');
 
   const paymentLabel = order.payment_method === 'cash' ? '💵 Bayar di Kasir' : '💳 QRIS';

@@ -30,7 +30,6 @@ create table products (
   id bigint generated always as identity primary key,
   name text not null,
   price int not null check (price > 0),
-  price_small int check (price_small > 0),
   price_large int check (price_large > 0),
   category_id bigint not null references categories(id) on delete restrict,
   description text,
@@ -186,9 +185,9 @@ create table order_items (
   product_id bigint not null references products(id) on delete restrict,
   product_name text not null,
   qty int not null check (qty > 0),
-  size text not null check (size in ('Small', 'Regular', 'Large')),
-  temp text not null check (temp in ('Hot', 'Iced')),
-  sugar text not null check (sugar in ('Less', 'Normal', 'Extra')),
+  size text not null check (size in ('Regular Ice', 'Large Ice')),
+  sweetness text not null check (sweetness in ('Normal Sweet', 'Less Sweet')),
+  ice_cube text not null check (ice_cube in ('Normal Ice', 'Less Ice', 'More Ice')),
   price_at_order int not null check (price_at_order > 0),
   created_at timestamptz not null default now()
 );
@@ -416,10 +415,10 @@ insert into categories (name, sort_order) values
 -- ============================================
 -- 14. Seed Data: Sample Products (1 per category)
 -- ============================================
-insert into products (name, price, price_small, price_large, category_id, description, image_url) values
-  ('Caramel Latte', 28000, 24000, 32000, 1, 'Espresso dengan susu dan karamel manis', 'https://images.unsplash.com/photo-1485808191679-5f86510bd9d4?w=400&q=80'),
-  ('Matcha Latte', 30000, 26000, 34000, 2, 'Matcha premium Jepang dengan susu segar', 'https://images.unsplash.com/photo-1515823662972-da6a2e4d3002?w=400&q=80'),
-  ('Butter Croissant', 22000, null, null, 3, 'Croissant renyah dengan mentega premium', 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80');
+insert into products (name, price, price_large, category_id, description, image_url) values
+  ('Caramel Latte', 28000, 35000, 1, 'Espresso dengan susu dan karamel manis', 'https://images.unsplash.com/photo-1485808191679-5f86510bd9d4?w=400&q=80'),
+  ('Matcha Latte', 30000, 37000, 2, 'Matcha premium Jepang dengan susu segar', 'https://images.unsplash.com/photo-1515823662972-da6a2e4d3002?w=400&q=80'),
+  ('Butter Croissant', 22000, null, 3, 'Croissant renyah dengan mentega premium', 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80');
 
 -- ============================================
 -- 15. Seed Data: Sample Branch
