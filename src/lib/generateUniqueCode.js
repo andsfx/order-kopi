@@ -1,64 +1,43 @@
 /**
- * Generate unique 4-digit code for order verification
- * Uses random approach with collision check for security.
- * Deterministic approach is available as fallback only.
+ * Generate unique code (0-500) for order verification
+ * Uses random approach for security.
  * 
- * @param {string} orderId - Order ID (used for fallback only)
- * @param {number} finalTotal - Final order total (after discount) - used for additional entropy
- * @returns {string} 4-digit code (1000-9999)
+ * @param {string} orderId - Order ID (unused, kept for API compat)
+ * @param {number} finalTotal - Final order total (unused, kept for API compat)
+ * @returns {string} 1-3 digit code (0-500)
  */
 export function generateUniqueCode(orderId, finalTotal = 0) {
-  // Use random generation for unpredictability
-  // Deterministic codes are predictable if order ID pattern is known
-  const code = Math.floor(Math.random() * 9000) + 1000;
+  const code = Math.floor(Math.random() * 501);
   return code.toString();
 }
 
 /**
- * Generate deterministic 4-digit code from order ID (fallback only)
+ * Generate deterministic code from order ID (fallback only)
  * WARNING: Predictable — do not use as primary method
  * @param {string} orderId - Order ID
  * @param {number} finalTotal - Final order total (after discount)
- * @returns {string} 4-digit code (1000-9999)
+ * @returns {string} 1-3 digit code (0-500)
  */
 export function generateDeterministicCode(orderId, finalTotal = 0) {
-  // Extract numeric part from order ID
-  // e.g., "ORD-20260506-001" -> 20260506001
   const numericPart = orderId.replace(/\D/g, '');
-  
-  // Use last 4 digits as base, default to 1000 if empty
-  let base;
-  if (numericPart.length >= 4) {
-    base = parseInt(numericPart.slice(-4));
-  } else if (numericPart.length > 0) {
-    base = parseInt(numericPart) + 1000;
-  } else {
-    base = 1000;
-  }
-  
-  // Add finalTotal as additional entropy
+  let base = numericPart.length > 0 ? parseInt(numericPart.slice(-3)) : 0;
   if (finalTotal > 0) {
-    base += (finalTotal % 1000);
+    base += (finalTotal % 100);
   }
-  
-  // Ensure it's in range 1000-9999
-  const code = ((base - 1000) % 9000) + 1000;
-  
+  const code = base % 501;
   return code.toString();
 }
 
 /**
- * Fallback: Generate random 4-digit code with collision check
- * Only used if deterministic approach fails
+ * Fallback: Generate random code with collision check
  * @param {object} supabase - Supabase client
- * @returns {Promise<string>} 4-digit code (1000-9999)
+ * @returns {Promise<string>} 1-3 digit code (0-500)
  */
 export async function generateRandomUniqueCode(supabase) {
   const maxAttempts = 10;
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    // Generate random 4-digit code (1000-9999)
-    const code = Math.floor(Math.random() * 9000) + 1000;
+    const code = Math.floor(Math.random() * 501);
     
     // Check if code is used today
     const today = new Date().toISOString().split('T')[0];
@@ -71,7 +50,6 @@ export async function generateRandomUniqueCode(supabase) {
     
     if (error) throw error;
     
-    // If not used, return it
     if (!data || data.length === 0) {
       return code.toString();
     }

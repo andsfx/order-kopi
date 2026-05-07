@@ -2,78 +2,48 @@ import { describe, it, expect } from 'vitest';
 import { generateUniqueCode } from '../generateUniqueCode';
 
 describe('generateUniqueCode', () => {
-  it('generates 4-digit code', () => {
+  it('generates code in range 0-500', () => {
     const code = generateUniqueCode('ORD-20260506-001');
-    expect(code).toMatch(/^[1-9][0-9]{3}$/);
-    expect(parseInt(code)).toBeGreaterThanOrEqual(1000);
-    expect(parseInt(code)).toBeLessThanOrEqual(9999);
+    const num = parseInt(code);
+    expect(num).toBeGreaterThanOrEqual(0);
+    expect(num).toBeLessThanOrEqual(500);
   });
 
-  it('generates consistent code for same order ID', () => {
-    const orderId = 'ORD-20260506-001';
-    const code1 = generateUniqueCode(orderId);
-    const code2 = generateUniqueCode(orderId);
-    expect(code1).toBe(code2);
+  it('generates valid numeric string', () => {
+    const code = generateUniqueCode('ORD-20260506-001');
+    expect(code).toMatch(/^\d+$/);
   });
 
-  it('generates different codes for different order IDs', () => {
-    const code1 = generateUniqueCode('ORD-20260506-001');
-    const code2 = generateUniqueCode('ORD-20260506-002');
-    expect(code1).not.toBe(code2);
-  });
-
-  it('handles order IDs with different formats', () => {
-    const testCases = [
-      'ORD-20260506-001',
-      'ORD-20260506-999',
-      'ORD-20260507-001',
-      'ORDER-123456789',
-      'ORD-1234',
-    ];
-
-    testCases.forEach(orderId => {
-      const code = generateUniqueCode(orderId);
-      expect(code).toMatch(/^[1-9][0-9]{3}$/);
-      expect(parseInt(code)).toBeGreaterThanOrEqual(1000);
-      expect(parseInt(code)).toBeLessThanOrEqual(9999);
-    });
-  });
-
-  it('generates codes in valid range for sequential order IDs', () => {
+  it('generates random codes (not deterministic)', () => {
+    // Since codes are random, we just verify they're all in range
     const codes = new Set();
-    
-    // Generate 100 sequential order IDs
-    for (let i = 1; i <= 100; i++) {
-      const orderId = `ORD-20260506-${String(i).padStart(3, '0')}`;
-      const code = generateUniqueCode(orderId);
-      
-      // Verify format
-      expect(code).toMatch(/^[1-9][0-9]{3}$/);
-      
-      // Verify range
-      const numCode = parseInt(code);
-      expect(numCode).toBeGreaterThanOrEqual(1000);
-      expect(numCode).toBeLessThanOrEqual(9999);
-      
-      // Track unique codes
+    for (let i = 0; i < 50; i++) {
+      const code = generateUniqueCode('ORD-20260506-001');
+      const num = parseInt(code);
+      expect(num).toBeGreaterThanOrEqual(0);
+      expect(num).toBeLessThanOrEqual(500);
       codes.add(code);
     }
-    
-    // Verify we got different codes (at least 90% unique)
-    expect(codes.size).toBeGreaterThan(90);
+    // Random generation should produce at least a few different codes
+    expect(codes.size).toBeGreaterThan(1);
   });
 
-  it('handles edge cases', () => {
-    // Empty numeric part
-    const code1 = generateUniqueCode('ORD-ABC-XYZ');
-    expect(parseInt(code1)).toBe(1000);
-    
-    // Very large numbers
-    const code2 = generateUniqueCode('ORD-99999999999999');
-    expect(code2).toMatch(/^[1-9][0-9]{3}$/);
-    
-    // Single digit
-    const code3 = generateUniqueCode('ORD-1');
-    expect(code3).toMatch(/^[1-9][0-9]{3}$/);
+  it('all generated codes are within 0-500 range across many calls', () => {
+    for (let i = 0; i < 200; i++) {
+      const code = generateUniqueCode(`ORD-${i}`);
+      const num = parseInt(code);
+      expect(num).toBeGreaterThanOrEqual(0);
+      expect(num).toBeLessThanOrEqual(500);
+    }
+  });
+
+  it('code adds at most Rp 500 to total', () => {
+    const finalTotal = 50000;
+    for (let i = 0; i < 50; i++) {
+      const code = generateUniqueCode(null, finalTotal);
+      const amountToPay = finalTotal + parseInt(code);
+      expect(amountToPay).toBeLessThanOrEqual(finalTotal + 500);
+      expect(amountToPay).toBeGreaterThanOrEqual(finalTotal);
+    }
   });
 });

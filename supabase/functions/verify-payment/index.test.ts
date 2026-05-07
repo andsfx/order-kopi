@@ -11,7 +11,7 @@ const mockSupabase = {
             data: {
               id: 'test-order-1',
               total: 50000,
-              unique_code: '1234',
+              unique_code: '347',
               status: 'pending_payment',
               session_token: 'test-session',
               customer_name: 'Test Customer',
@@ -50,13 +50,13 @@ Deno.test('Verify Payment - Auto-approve when proof exists and amount matches', 
   const request = {
     orderId: 'test-order-1',
     paymentProofUrl: 'https://example.com/proof.jpg',
-    amountEntered: 51234, // 50000 + 1234
+    amountEntered: 50347, // 50000 + 347
     sessionToken: 'test-session'
   };
 
   // Test would call the actual function here
   // For now, we're testing the logic structure
-  const expectedAmount = 50000 + 1234;
+  const expectedAmount = 50000 + 347;
   const amountDiff = Math.abs(request.amountEntered - expectedAmount);
   
   assertEquals(amountDiff, 0, 'Amount should match exactly');
@@ -67,7 +67,7 @@ Deno.test('Verify Payment - Reject when proof missing', async () => {
   const request = {
     orderId: 'test-order-1',
     paymentProofUrl: '',
-    amountEntered: 51234,
+    amountEntered: 50347,
     sessionToken: 'test-session'
   };
 
@@ -82,7 +82,7 @@ Deno.test('Verify Payment - Reject when amount does not match', async () => {
     sessionToken: 'test-session'
   };
 
-  const expectedAmount = 50000 + 1234;
+  const expectedAmount = 50000 + 347;
   const amountDiff = Math.abs(request.amountEntered - expectedAmount);
   
   assertEquals(amountDiff > 1, true, 'Amount difference should be significant');

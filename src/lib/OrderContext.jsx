@@ -98,7 +98,7 @@ export function OrderProvider({ children }) {
     const subtotal = cartItems.reduce((sum, i) => sum + (i.price ?? i.product.price) * i.qty, 0);
     const finalTotal = Math.max(0, subtotal - voucherDiscount);
 
-    // Generate 4-digit unique code for QRIS Static payment verification
+    // Generate unique code (0-500) for QRIS Static payment verification
     const uniqueCode = generateUniqueCode(null, finalTotal);
     const amountToPay = finalTotal + parseInt(uniqueCode);
 
