@@ -50,7 +50,7 @@
 ### 🔒 Keamanan Enterprise
 - **Payment Proof Validation:** Magic bytes check prevents file spoofing
 - **Fraud Detection System:** Risk scoring (0-100) with pattern detection
-- **Unique Code Collision Prevention:** Database constraint + 4-digit codes (9000 capacity)
+- **Unique Code Collision Prevention:** Database constraint + unique code (0-500 range, max Rp 500 extra)
 - **Concurrent Verification Protection:** Optimistic locking prevents duplicate approvals
 - **Row Level Security (RLS):** Database-level isolation antar customer
 - **Rate Limiting:** Server-side protection (10 req/min per IP)
@@ -79,7 +79,7 @@
 - **WhatsApp Integration:** Share order link via WhatsApp
 
 ### 🆕 New Features (2026-05)
-- **4-Digit Unique Code System:** 9000 codes capacity vs 900 with 3-digit
+- **Unique Code System:** 0-500 range per order (max Rp 500 extra, e.g., Rp 50,123 for Rp 50k order)
 - **Auto-Verification:** 80%+ orders auto-approved, reduces admin workload
 - **Bulk Verification:** Admin can verify multiple orders at once
 - **Payment Analytics Dashboard:** Track auto-verification rate, fraud detection, avg time
@@ -91,7 +91,7 @@
 - **Performance Indexes:** 5 indexes for 10-100x faster queries
 
 ### 📄 Payment Flexibility
-- **QRIS Static with Unique Code:** 4-digit unique code per order (e.g., Rp 50,123 for Rp 50k order)
+- **QRIS Static with Unique Code:** Unique code (0-500) per order (e.g., Rp 50,123 for Rp 50k order)
 - **Auto-Verification:** 80%+ orders auto-approved when amount matches
 - **Fraud Detection:** Risk scoring system with manual review for suspicious patterns
 - **Payment Proof Upload:** Secure file upload with magic bytes validation
@@ -165,7 +165,7 @@
 
 ### Payment
 - **QRIS Static** - Zero transaction fees (save Rp 24M/year)
-- **Unique Code Verification** - 4-digit codes for auto-verification
+- **Unique Code Verification** - 0-500 range codes for auto-verification
 - **Fraud Detection** - Risk scoring system
 
 ### DevOps
@@ -226,6 +226,7 @@
 - **Audit Trail:** Semua perubahan order tercatat (immutable, admin-only access)
 - **RLS Policies:** Database-level security dengan Row Level Security
 - **Token Expiry:** Token otomatis expire setelah 24 jam (atau extend jika aktif)
+- **Error Logging:** Client-side error otomatis tersimpan ke tabel `error_logs` (visible di Supabase Dashboard)
 
 ---
 
@@ -423,6 +424,7 @@ order-kopi/
 ├── src/
 │   ├── components/      # Komponen reusable (Cart, Toast, ProductCard, dll)
 │   ├── lib/             # Context, hooks, dan utility (Auth, Cart, Orders, Store)
+│   │   ├── logError.js      # Custom error logging ke Supabase
 │   ├── pages/           # Halaman aplikasi
 │   │   ├── Home.jsx         # Menu pelanggan
 │   │   ├── Checkout.jsx     # Halaman checkout
@@ -519,6 +521,7 @@ Untuk mencegah spam dan abuse:
 Semua tabel menggunakan **Row Level Security (RLS)** Supabase:
 - Customer hanya bisa baca/update order mereka sendiri
 - Admin (authenticated) bisa akses semua data
+- `error_logs` hanya bisa di-insert (frontend tidak bisa baca error log)
 - Kebijakan keamanan di level database (tidak bisa di-bypass)
 
 ### Testing Security
@@ -542,9 +545,55 @@ cat SECURITY_TESTING.md
 
 ---
 
+## 🔍 Error Monitoring
+
+Order Kopi menggunakan **custom error logging** ke Supabase — tanpa dependency eksternal.
+
+### Cara Kerja
+
+1. **Global error handlers** menangkap semua unhandled error & promise rejection
+2. **ErrorBoundary** menangkap error di komponen React
+3. Error disimpan ke tabel `error_logs` di Supabase (insert-only, frontend tidak bisa baca)
+4. Lihat error di **Supabase Dashboard → Table Editor → error_logs**
+
+### Data yang Tersimpan
+
+| Kolom | Isi |
+|-------|-----|
+| `message` | Pesan error |
+| `stack` | Stack trace |
+| `component_stack` | React component stack (dari ErrorBoundary) |
+| `url` | URL halaman saat error |
+| `browser` | Chrome / Firefox / Safari / Edge |
+| `os` | Windows / macOS / Android / iOS |
+| `device` | Mobile / Desktop |
+| `environment` | development / production |
+| `metadata` | Extra data (JSON) |
+| `created_at` | Waktu error |
+
+### Manual Error Logging
+
+Untuk log error dari kode custom:
+
+```javascript
+import { logError } from './lib/logError';
+
+try {
+  // risky operation
+} catch (error) {
+  logError(error, { metadata: { context: 'checkout' } });
+}
+```
+
+### Auto-Cleanup
+
+Error logs dihapus otomatis setelah 30 hari (via pg_cron). Tidak perlu maintenance manual.
+
+---
+
 ## QRIS Static Payment System
 
-Order Kopi uses QRIS Static with unique code verification for zero transaction fees. Each order gets a 4-digit unique code (e.g., Rp 50,123 for Rp 50k order), and 80%+ orders are auto-verified when the exact amount is paid.
+Order Kopi uses QRIS Static with unique code verification for zero transaction fees. Each order gets a unique code (0-500 range, e.g., Rp 50,123 for Rp 50k order), and 80%+ orders are auto-verified when the exact amount is paid.
 
 ### Setup QRIS Static
 
@@ -584,7 +633,7 @@ VITE_ENABLE_PAYMENT_ANALYTICS=true
 
 ### How It Works
 
-1. **Customer checkout** → Order created with unique 4-digit code
+1. **Customer checkout** → Order created with unique code (0-500 range)
 2. **Customer pays** → Scan QRIS & pay exact amount (Rp 50,123)
 3. **Upload proof** → Customer uploads payment screenshot
 4. **Auto-verification** → Edge Function verifies amount & updates status
@@ -790,7 +839,7 @@ where table_name = 'orders' and column_name = 'session_token';
 
 ### Unique code collision error
 
-**Penyebab:** Duplicate unique code generated (very rare with 4-digit system)
+**Penyebab:** Duplicate unique code generated (very rare with 0-500 range)
 
 **Solusi:**
 1. Check database constraint is active
