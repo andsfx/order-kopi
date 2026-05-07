@@ -1,10 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -12,15 +14,14 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Find orders that are pending_payment and older than 15 minutes
-    // EXCLUDE orders with payment_proof_url (customer has submitted proof)
+    // 1. Find pending_payment orders older than 15 minutes WITHOUT payment proof
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
     const { data: expiredOrders, error: findError } = await supabase
       .from('orders')
-      .select('id, customer_name, total, created_at')
+      .select('id, customer_name, total, created_at, status')
       .eq('status', 'pending_payment')
-      .is('payment_proof_url', null)  // Only cancel orders WITHOUT payment proof
+      .is('payment_proof_url', null)
       .lt('created_at', fifteenMinutesAgo);
 
     if (findError) {
@@ -31,16 +32,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!expiredOrders || expiredOrders.length === 0) {
+    // 2. Find pending_verification orders older than 60 minutes
+    // (admin hasn't reviewed them — likely abandoned or forgotten)
+    const sixtyMinutesAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+    const { data: staleVerificationOrders, error: staleError } = await supabase
+      .from('orders')
+      .select('id, customer_name, total, created_at, status')
+      .eq('status', 'pending_verification')
+      .lt('created_at', sixtyMinutesAgo);
+
+    if (staleError) {
+      console.error('Error finding stale verification orders:', staleError);
+      // Don't fail the whole request, just log and continue
+    }
+
+    // Combine all orders to cancel
+    const allOrders = [
+      ...(expiredOrders || []).map(o => ({ ...o, reason: 'Payment timeout (15 min)' })),
+      ...(staleVerificationOrders || []).map(o => ({ ...o, reason: 'Verification timeout (60 min)' })),
+    ];
+
+    if (allOrders.length === 0) {
       return new Response(
         JSON.stringify({ message: 'No expired orders found', cancelled: 0 }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const orderIds = expiredOrders.map((o) => o.id);
+    const orderIds = allOrders.map((o) => o.id);
 
-    // Cancel orders and log audit trail
+    // Cancel orders
     const { error: updateError } = await supabase
       .from('orders')
       .update({ 
@@ -59,14 +81,17 @@ Deno.serve(async (req) => {
     }
 
     // Log audit events for each cancelled order
-    for (const order of expiredOrders) {
+    for (const order of allOrders) {
       await supabase.from('audit_logs').insert({
-        event_type: 'order_auto_cancelled',
+        event_type: order.status === 'pending_verification' 
+          ? 'order_verification_timeout_cancelled' 
+          : 'order_auto_cancelled',
         order_id: order.id,
         details: {
-          reason: 'Payment timeout (15 min)',
+          reason: order.reason,
           customer_name: order.customer_name,
           total: order.total,
+          original_status: order.status,
           created_at: order.created_at
         },
         created_at: new Date().toISOString()
@@ -76,7 +101,13 @@ Deno.serve(async (req) => {
     console.log(`Auto-cancelled ${orderIds.length} orders: ${orderIds.join(', ')}`);
 
     return new Response(
-      JSON.stringify({ message: 'Expired orders cancelled', cancelled: orderIds.length, order_ids: orderIds }),
+      JSON.stringify({ 
+        message: 'Expired orders cancelled', 
+        cancelled: orderIds.length, 
+        order_ids: orderIds,
+        pending_payment_cancelled: (expiredOrders || []).length,
+        pending_verification_cancelled: (staleVerificationOrders || []).length,
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {

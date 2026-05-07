@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 import { checkFraud } from '../_shared/fraudDetection.ts';
+import { getClientIP, checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -8,18 +9,28 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 interface VerifyPaymentRequest {
   orderId: string;
   paymentProofUrl: string;
+  paymentProofPath?: string; // Storage path for private bucket
   amountEntered: number;
   sessionToken: string;
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const retryAfter = checkRateLimit(clientIP);
+    if (retryAfter !== null) {
+      return rateLimitResponse(retryAfter, corsHeaders);
+    }
+
     const body: VerifyPaymentRequest = await req.json();
-    const { orderId, paymentProofUrl, amountEntered, sessionToken } = body;
+    const { orderId, paymentProofUrl, paymentProofPath, amountEntered, sessionToken } = body;
 
     // Validate inputs
     if (!orderId || !paymentProofUrl || !amountEntered || !sessionToken) {
@@ -176,6 +187,7 @@ Deno.serve(async (req) => {
     // Update order
     const updateData: any = {
       payment_proof_url: paymentProofUrl,
+      payment_proof_path: paymentProofPath || null, // Store storage path
       payment_amount_entered: amountEntered,
       auto_verified: autoVerified,
       needs_manual_review: fraudCheck.needsReview,

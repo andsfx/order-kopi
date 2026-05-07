@@ -1,16 +1,26 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 import { sendTelegramNotification, formatOrderNotification } from '../_shared/telegram.ts';
+import { getClientIP, checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // Rate limiting (admin endpoints: allow 30 req/min)
+    const clientIP = getClientIP(req);
+    const retryAfter = checkRateLimit(clientIP, 30);
+    if (retryAfter !== null) {
+      return rateLimitResponse(retryAfter, corsHeaders);
+    }
+
     const { order_id } = await req.json();
 
     if (!order_id) {
@@ -36,26 +46,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (order.status !== 'pending_payment') {
+    if (order.status !== 'pending_payment' && order.status !== 'pending_verification') {
       return new Response(
-        JSON.stringify({ error: 'Order is not pending payment', status: order.status }),
+        JSON.stringify({ error: 'Order is not pending payment or verification', status: order.status }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Update status to paid
-    const { error: updateError } = await supabase
+    // Update status to paid with optimistic locking (prevent double-confirm)
+    const { data: updated, error: updateError } = await supabase
       .from('orders')
       .update({
         status: 'paid',
         paid_at: new Date().toISOString(),
       })
-      .eq('id', order_id);
+      .eq('id', order_id)
+      .in('status', ['pending_payment', 'pending_verification'])
+      .select()
+      .single();
 
-    if (updateError) {
+    if (updateError || !updated) {
       return new Response(
-        JSON.stringify({ error: 'Failed to update order' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to update order — may already be processed' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
