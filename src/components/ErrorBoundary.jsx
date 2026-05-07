@@ -1,11 +1,10 @@
 import { Component } from 'react';
-import * as Sentry from '@sentry/react';
+import { logError } from '../lib/logError';
 
 /**
- * Error Boundary with Sentry integration.
- * If VITE_SENTRY_DSN is not set, errors are only logged to console.
+ * Error Boundary with custom Supabase error logging.
+ * Errors are saved to the error_logs table and visible in the Supabase dashboard.
  */
-
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -17,11 +16,10 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught:', error, errorInfo);
-
-    if (import.meta.env.VITE_SENTRY_DSN) {
-      Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
-    }
+    logError(error, {
+      componentStack: errorInfo.componentStack,
+      metadata: { source: 'ErrorBoundary' },
+    });
   }
 
   render() {
