@@ -1,4 +1,10 @@
 import { Component } from 'react';
+import * as Sentry from '@sentry/react';
+
+/**
+ * Error Boundary with Sentry integration.
+ * If VITE_SENTRY_DSN is not set, errors are only logged to console.
+ */
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -12,6 +18,10 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
+    }
   }
 
   render() {

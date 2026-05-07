@@ -163,12 +163,12 @@ export default function OrderStatus() {
             {order.paymentMethod === 'cash' ? (
               <>
                 <h2 className="font-bold text-text-primary mb-1 text-center">💵 Bayar di Kasir</h2>
-                <div className="mt-4 bg-amber-50 rounded-xl p-4 text-center">
-                  <p className="text-xs text-text-secondary">Total yang harus dibayar</p>
-                  <p className="text-2xl font-bold text-primary mt-0.5">
-                    Rp {order.total.toLocaleString('id-ID')}
-                  </p>
-                </div>
+                 <div className="mt-4 bg-amber-50 rounded-xl p-4 text-center">
+                   <p className="text-xs text-text-secondary">Total yang harus dibayar</p>
+                   <p className="text-2xl font-bold text-primary mt-0.5">
+                     Rp {(order.amountToPay || order.total).toLocaleString('id-ID')}
+                   </p>
+                 </div>
                 <p className="text-sm text-text-secondary text-center mt-3">
                   Silakan bayar di kasir. Pesanan akan diproses setelah pembayaran dikonfirmasi.
                 </p>
@@ -189,8 +189,13 @@ export default function OrderStatus() {
                 <div className="mt-4 bg-emerald-50 rounded-xl p-3 text-center">
                   <p className="text-xs text-text-secondary">Total yang harus dibayar</p>
                   <p className="text-2xl font-bold text-primary mt-0.5">
-                    Rp {order.total.toLocaleString('id-ID')}
+                    Rp {(order.amountToPay || order.total).toLocaleString('id-ID')}
                   </p>
+                  {order.uniqueCode && order.amountToPay > order.total && (
+                    <p className="text-xs text-text-muted mt-1">
+                      Termasuk kode unik Rp {order.uniqueCode}
+                    </p>
+                  )}
                 </div>
                 <p className="text-xs text-text-muted text-center mt-3">
                   {order.paymentUrl ? 

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
+import { supabase } from './lib/supabase';
 import { CartProvider } from './lib/CartContext';
 import { OrderProvider } from './lib/OrderContext';
 import { AuthProvider, useAuth } from './lib/useAuth';
@@ -38,6 +39,24 @@ function ProtectedRoute({ children, allowSetup = false }) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check admin role from user metadata
+  const userRole = user.app_metadata?.role || user.user_metadata?.role;
+  if (userRole && userRole !== 'admin') {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 text-center">
+        <AlertTriangle size={32} className="text-text-muted" />
+        <h1 className="text-xl font-bold text-text-primary mt-4">Akses Ditolak</h1>
+        <p className="text-text-secondary mt-2 text-sm">Akun Anda tidak memiliki akses admin.</p>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="mt-6 bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold"
+        >
+          Keluar
+        </button>
+      </div>
+    );
   }
 
   // Redirect to setup wizard if not completed (unless we're already on setup)
