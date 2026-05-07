@@ -14,10 +14,14 @@ function transformOrder(order) {
       note: order.note,
     },
     total: order.total,
+    amountToPay: order.amount_to_pay || order.total,
+    uniqueCode: order.unique_code || null,
     status: order.status,
     createdAt: order.created_at,
     paymentUrl: order.payment_url,
     paymentMethod: order.payment_method || 'qris',
+    paymentProofUrl: order.payment_proof_url,
+    paymentProofPath: order.payment_proof_path,
     items: (order.order_items || []).map((item) => ({
       key: `${item.product_id}-${item.size}-${item.temp}-${item.sugar}`,
       product: {
@@ -86,93 +90,20 @@ export function OrderProvider({ children }) {
     };
   }, [fetchOrders]);
 
-  // Place a new order (insert into Supabase)
+  // Place a new order using atomic RPC (single transaction)
   async function placeOrder(cartItems, customerInfo, appliedVoucher = null, voucherDiscount = 0) {
     // Get or create session token for this customer
     const sessionToken = getSessionToken();
     
-    const { data: counterData, error: counterError } = await supabase
-      .rpc('generate_order_id');
-
-    if (counterError) {
-      throw new Error('Gagal membuat order: ' + counterError.message);
-    }
-
-    const orderId = counterData;
     const subtotal = cartItems.reduce((sum, i) => sum + (i.price ?? i.product.price) * i.qty, 0);
     const finalTotal = Math.max(0, subtotal - voucherDiscount);
 
     // Generate 4-digit unique code for QRIS Static payment verification
-    // IMPORTANT: Use finalTotal (after discount) for unique code calculation
-    const uniqueCode = generateUniqueCode(orderId, finalTotal);
+    const uniqueCode = generateUniqueCode(null, finalTotal);
     const amountToPay = finalTotal + parseInt(uniqueCode);
 
-    // Insert order with session token, voucher, and unique code
-    const { error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        id: orderId,
-        customer_name: customerInfo.name,
-        note: customerInfo.note || null,
-        total: finalTotal,
-        unique_code: uniqueCode,
-        amount_to_pay: amountToPay,
-        discount_amount: voucherDiscount || 0,
-        status: 'pending_payment',
-        payment_method: customerInfo.paymentMethod || 'qris',
-        branch_id: customerInfo.branchId || null,
-        session_token: sessionToken,
-        voucher_id: appliedVoucher?.id || null,
-        discount_amount: voucherDiscount || 0,
-      });
-
-    if (orderError) {
-      throw new Error('Gagal menyimpan order: ' + orderError.message);
-    }
-
-    // If payment method is QRIS, create Cashi.id payment
-    let paymentUrl = null;
-    let paymentId = null;
-    
-    if (customerInfo.paymentMethod === 'qris') {
-      try {
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-cashi-payment', {
-          body: {
-            order_id: orderId,
-            amount: total,
-            customer_name: customerInfo.name,
-          },
-        });
-
-        if (paymentError) {
-          console.error('Failed to create Cashi payment:', paymentError);
-          // Continue without payment URL - will show error to user
-        } else if (paymentData) {
-          paymentUrl = paymentData.payment_url; // Cashi.id returns base64 QRIS image
-          paymentId = paymentData.payment_id;
-          
-          // Update order with payment details
-          const { error: updateError } = await supabase
-            .from('orders')
-            .update({
-              payment_id: paymentId,
-              payment_url: paymentUrl,
-            })
-            .eq('id', orderId);
-            
-          if (updateError) {
-            console.error('Failed to update order with payment details:', updateError);
-          }
-        }
-      } catch (error) {
-        console.error('Error creating Cashi payment:', error);
-        // Continue without payment URL
-      }
-    }
-
-    // Insert order items
-    const items = cartItems.map((item) => ({
-      order_id: orderId,
+    // Prepare items as JSON for atomic RPC
+    const itemsJson = cartItems.map((item) => ({
       product_id: item.product.id,
       product_name: item.product.name,
       qty: item.qty,
@@ -182,32 +113,62 @@ export function OrderProvider({ children }) {
       price_at_order: item.price ?? item.product.price,
     }));
 
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(items);
+    // Call atomic RPC — order, items, and voucher increment in one transaction
+    const { data: orderData, error: rpcError } = await supabase.rpc('create_order_atomic', {
+      p_customer_name: customerInfo.name,
+      p_note: customerInfo.note || null,
+      p_total: finalTotal,
+      p_unique_code: uniqueCode,
+      p_amount_to_pay: amountToPay,
+      p_payment_method: customerInfo.paymentMethod || 'qris',
+      p_branch_id: customerInfo.branchId || null,
+      p_session_token: sessionToken,
+      p_voucher_id: appliedVoucher?.id || null,
+      p_discount_amount: voucherDiscount || 0,
+      p_items: itemsJson,
+    });
 
-    if (itemsError) {
-      // Rollback: delete orphaned order
-      await supabase.from('orders').delete().eq('id', orderId);
-      throw new Error('Gagal menyimpan item order: ' + itemsError.message);
+    if (rpcError) {
+      throw new Error('Gagal membuat order: ' + rpcError.message);
     }
 
-    // Increment voucher usage count if voucher was used (atomic to prevent race condition)
-    if (appliedVoucher) {
-      const { error: voucherError } = await supabase.rpc('increment_voucher_usage', { 
-        p_voucher_id: appliedVoucher.id 
-      });
-      
-      if (voucherError) {
-        console.error('Failed to increment voucher usage:', voucherError);
-        // Don't fail the order, just log the error
+    const orderId = orderData.order_id;
+
+    // If payment method is QRIS, create Cashi.id payment
+    if (customerInfo.paymentMethod === 'qris') {
+      try {
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-cashi-payment', {
+          body: {
+            order_id: orderId,
+            amount: amountToPay,
+            customer_name: customerInfo.name,
+          },
+        });
+
+        if (paymentError) {
+          console.error('Failed to create Cashi payment:', paymentError);
+        } else if (paymentData) {
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({
+              payment_id: paymentData.payment_id,
+              payment_url: paymentData.payment_url,
+            })
+            .eq('id', orderId);
+            
+          if (updateError) {
+            console.error('Failed to update order with payment details:', updateError);
+          }
+        }
+      } catch (error) {
+        console.error('Error creating Cashi payment:', error);
       }
     }
 
     // Log order creation to audit log
     await logOrderCreation(orderId, {
       customer_name: customerInfo.name,
-      total,
+      total: finalTotal,
       payment_method: customerInfo.paymentMethod || 'qris',
       branch_id: customerInfo.branchId
     }, sessionToken);
@@ -215,7 +176,7 @@ export function OrderProvider({ children }) {
     return {
       id: orderId,
       customer: customerInfo,
-      total,
+      total: finalTotal,
       status: 'pending_payment',
       paymentMethod: customerInfo.paymentMethod || 'qris',
       createdAt: new Date().toISOString(),
@@ -322,16 +283,19 @@ export function OrderProvider({ children }) {
         throw new Error('Gagal upload bukti pembayaran: ' + uploadError.message);
       }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('order-attachments')
-        .getPublicUrl(filePath);
+      // Generate signed URL (1 hour expiry)
+      const signedUrl = await getPaymentProofSignedUrl(filePath, 3600);
+      
+      if (!signedUrl) {
+        throw new Error('Gagal membuat URL akses bukti pembayaran');
+      }
 
-      // 2. Call verify-payment Edge Function
+      // 2. Call verify-payment Edge Function with signed URL
       const { data, error } = await supabase.functions.invoke('verify-payment', {
         body: {
           orderId,
-          paymentProofUrl: publicUrl,
+          paymentProofUrl: signedUrl,
+          paymentProofPath: filePath, // Store the storage path
           amountEntered: parseInt(amountEntered, 10),
           sessionToken
         }
@@ -341,14 +305,16 @@ export function OrderProvider({ children }) {
         throw new Error('Gagal verifikasi pembayaran: ' + error.message);
       }
 
-      // 3. Return result
+      // 3. Return result with signed URL
       return {
         success: data.success,
         autoVerified: data.auto_verified,
         needsManualReview: data.needs_manual_review,
         fraudScore: data.fraud_score,
         message: data.message,
-        error: data.error
+        error: data.error,
+        signedUrl: signedUrl,
+        storagePath: filePath
       };
     } catch (error) {
       console.error('Upload payment proof error:', error);
@@ -356,8 +322,27 @@ export function OrderProvider({ children }) {
     }
   }
 
+  // Helper: Generate signed URL for payment proof
+  async function getPaymentProofSignedUrl(filePath, expiresIn = 3600) {
+    try {
+      const { data, error } = await supabase.storage
+        .from('order-attachments')
+        .createSignedUrl(filePath, expiresIn);
+      
+      if (error) {
+        console.error('Error creating signed URL:', error);
+        return null;
+      }
+      
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error creating signed URL:', error);
+      return null;
+    }
+  }
+
   return (
-    <OrderContext.Provider value={{ orders, loading, placeOrder, updateStatus, getOrder, fetchOrders, uploadPaymentProof }}>
+    <OrderContext.Provider value={{ orders, loading, placeOrder, updateStatus, getOrder, fetchOrders, uploadPaymentProof, getPaymentProofSignedUrl }}>
       {children}
     </OrderContext.Provider>
   );

@@ -2,7 +2,8 @@ import { supabase } from './supabase';
 
 export function useVoucher() {
   /**
-   * Validate voucher code and check eligibility
+   * Validate voucher code, check eligibility, and atomically increment usage.
+   * Uses server-side RPC to prevent race conditions.
    * @param {string} code - Voucher code (case-insensitive)
    * @param {number} cartTotal - Current cart total before discount
    * @returns {Promise<{valid: boolean, voucher: object|null, error: string|null}>}
@@ -12,50 +13,39 @@ export function useVoucher() {
       return { valid: false, voucher: null, error: 'Kode voucher tidak boleh kosong' };
     }
 
-    // Fetch voucher by code (case-insensitive)
-    const { data: voucher, error: fetchError } = await supabase
-      .from('vouchers')
-      .select('*')
-      .ilike('code', code.trim())
-      .single();
+    try {
+      // Use atomic RPC: validates AND increments usage in one call
+      const { data, error } = await supabase.rpc('validate_and_use_voucher', {
+        p_code: code.trim(),
+        p_cart_total: cartTotal,
+      });
 
-    if (fetchError || !voucher) {
-      return { valid: false, voucher: null, error: 'Kode voucher tidak ditemukan' };
-    }
+      if (error) {
+        console.error('Voucher validation RPC error:', error);
+        return { valid: false, voucher: null, error: 'Gagal memvalidasi voucher' };
+      }
 
-    // Check if active
-    if (!voucher.is_active) {
-      return { valid: false, voucher: null, error: 'Voucher tidak aktif' };
-    }
+      if (!data.valid) {
+        return { valid: false, voucher: null, error: data.error };
+      }
 
-    // Check validity period
-    const now = new Date();
-    const validFrom = new Date(voucher.valid_from);
-    const validTo = new Date(voucher.valid_to);
-    
-    if (now < validFrom) {
-      return { valid: false, voucher: null, error: 'Voucher belum berlaku' };
-    }
-    
-    if (now > validTo) {
-      return { valid: false, voucher: null, error: 'Voucher sudah kadaluarsa' };
-    }
-
-    // Check usage limit
-    if (voucher.usage_count >= voucher.usage_limit) {
-      return { valid: false, voucher: null, error: 'Voucher sudah habis digunakan' };
-    }
-
-    // Check minimum purchase
-    if (cartTotal < voucher.min_purchase) {
-      return { 
-        valid: false, 
-        voucher: null, 
-        error: `Minimum pembelian Rp ${voucher.min_purchase.toLocaleString('id-ID')}` 
+      // Return voucher data with pre-calculated discount
+      const voucher = {
+        id: data.voucher.id,
+        code: data.voucher.code,
+        type: data.voucher.type,
+        discount_value: data.voucher.discount_value,
+        min_purchase: data.voucher.min_purchase,
       };
-    }
 
-    return { valid: true, voucher, error: null };
+      // Store discount amount from server (for fixed and percentage types)
+      voucher._serverDiscount = data.voucher.discount_amount;
+
+      return { valid: true, voucher, error: null };
+    } catch (err) {
+      console.error('Voucher validation error:', err);
+      return { valid: false, voucher: null, error: 'Gagal memvalidasi voucher' };
+    }
   }
 
   /**
@@ -68,28 +58,29 @@ export function useVoucher() {
   function calculateDiscount(voucher, cartItems, cartTotal) {
     if (!voucher) return 0;
 
+    // Use server-calculated discount if available (for fixed and percentage)
+    if (voucher._serverDiscount != null && voucher.type !== 'bogo') {
+      return voucher._serverDiscount;
+    }
+
     if (voucher.type === 'bogo') {
       // Buy 1 Get 1: Find pairs of items, make cheaper one free
-      // Sort items by price (ascending)
       const sortedItems = [...cartItems]
         .flatMap(item => Array(item.qty).fill(item.price))
         .sort((a, b) => a - b);
 
-      // Calculate discount: for every 2 items, the cheaper one is free
       let discount = 0;
       for (let i = 0; i < sortedItems.length - 1; i += 2) {
-        discount += sortedItems[i]; // Add cheaper item price
+        discount += sortedItems[i];
       }
       return discount;
     }
 
     if (voucher.type === 'fixed') {
-      // Fixed discount: subtract fixed amount, but not more than cart total
       return Math.min(voucher.discount_value, cartTotal);
     }
 
     if (voucher.type === 'percentage') {
-      // Percentage discount: calculate percentage of cart total
       return Math.round(cartTotal * voucher.discount_value / 100);
     }
 

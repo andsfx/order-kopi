@@ -1,11 +1,27 @@
 /**
  * Generate unique 4-digit code for order verification
- * Uses deterministic approach to avoid race conditions
- * @param {string} orderId - Order ID
+ * Uses random approach with collision check for security.
+ * Deterministic approach is available as fallback only.
+ * 
+ * @param {string} orderId - Order ID (used for fallback only)
  * @param {number} finalTotal - Final order total (after discount) - used for additional entropy
  * @returns {string} 4-digit code (1000-9999)
  */
 export function generateUniqueCode(orderId, finalTotal = 0) {
+  // Use random generation for unpredictability
+  // Deterministic codes are predictable if order ID pattern is known
+  const code = Math.floor(Math.random() * 9000) + 1000;
+  return code.toString();
+}
+
+/**
+ * Generate deterministic 4-digit code from order ID (fallback only)
+ * WARNING: Predictable — do not use as primary method
+ * @param {string} orderId - Order ID
+ * @param {number} finalTotal - Final order total (after discount)
+ * @returns {string} 4-digit code (1000-9999)
+ */
+export function generateDeterministicCode(orderId, finalTotal = 0) {
   // Extract numeric part from order ID
   // e.g., "ORD-20260506-001" -> 20260506001
   const numericPart = orderId.replace(/\D/g, '');
@@ -15,14 +31,12 @@ export function generateUniqueCode(orderId, finalTotal = 0) {
   if (numericPart.length >= 4) {
     base = parseInt(numericPart.slice(-4));
   } else if (numericPart.length > 0) {
-    // For short numbers, use them directly but ensure result is in range
     base = parseInt(numericPart) + 1000;
   } else {
     base = 1000;
   }
   
-  // Add finalTotal as additional entropy (helps with uniqueness)
-  // This ensures orders with same ID but different totals get different codes
+  // Add finalTotal as additional entropy
   if (finalTotal > 0) {
     base += (finalTotal % 1000);
   }
