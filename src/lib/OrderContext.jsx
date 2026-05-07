@@ -20,7 +20,6 @@ function transformOrder(order) {
     createdAt: order.created_at,
     paymentUrl: order.payment_url,
     paymentMethod: order.payment_method || 'qris',
-    paymentProofUrl: order.payment_proof_url,
     paymentProofPath: order.payment_proof_path,
     items: (order.order_items || []).map((item) => ({
       key: `${item.product_id}-${item.size}-${item.temp}-${item.sugar}`,
@@ -172,6 +171,9 @@ export function OrderProvider({ children }) {
       payment_method: customerInfo.paymentMethod || 'qris',
       branch_id: customerInfo.branchId
     }, sessionToken);
+
+    // Refresh orders so admin dashboard picks up the new order
+    fetchOrders();
 
     return {
       id: orderId,
