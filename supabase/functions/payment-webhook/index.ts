@@ -1,11 +1,18 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramNotification, formatOrderNotification } from '../_shared/telegram.ts';
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const WEBHOOK_SECRET = Deno.env.get('BAYAR_WEBHOOK_SECRET');
+
+if (!WEBHOOK_SECRET) {
+  throw new Error('BAYAR_WEBHOOK_SECRET environment variable is required');
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -17,7 +24,69 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const payload = await req.json();
+    const body = await req.text();
+    
+    // Verify webhook signature using HMAC-SHA256
+    const signature = req.headers.get('X-Signature') || req.headers.get('X-Bayar-Signature');
+    
+    if (!signature) {
+      console.error('Missing webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Compute HMAC-SHA256 of request body
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(WEBHOOK_SECRET);
+    const messageData = encoder.encode(body);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Timing-safe comparison
+    const receivedSigBuffer = encoder.encode(signature);
+    const expectedSigBuffer = encoder.encode(expectedSignature);
+    
+    // Ensure both buffers are same length to prevent timing attacks
+    if (receivedSigBuffer.length !== expectedSigBuffer.length) {
+      console.error('Invalid webhook signature: length mismatch');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Use XOR comparison for timing-safe validation
+    let isValid = true;
+    for (let i = 0; i < receivedSigBuffer.length; i++) {
+      if (receivedSigBuffer[i] !== expectedSigBuffer[i]) {
+        isValid = false;
+      }
+    }
+    
+    if (!isValid) {
+      console.error('Invalid webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Webhook signature verified successfully');
+    
+    const payload = JSON.parse(body);
     console.log('Webhook received:', JSON.stringify(payload));
 
     // bayar.gg webhook callback payload:
