@@ -1,20 +1,68 @@
 # Kustomisasi
 
-## Ganti Warna Utama
+## Ganti Warna Utama (Branding)
 
-Edit `src/index.css`, cari bagian CSS variables:
+Setiap client bisa mengubah warna utama aplikasi sesuai branding toko mereka, langsung dari admin dashboard — **tanpa ubah kode**.
+
+### Cara Ganti Warna
+
+1. Login sebagai admin
+2. Buka **Settings → Branding**
+3. Pilih salah satu:
+   - **8 preset warna** — klik langsung
+   - **Custom color** — gunakan color picker atau input hex code manual (contoh: `#6F4E37`)
+4. Lihat **preview** di bawah untuk memastikan warna sesuai
+5. Klik **Simpan Branding**
+
+### Preset Warna
+
+| Warna | Hex | Cocok Untuk |
+|-------|-----|-------------|
+| Hijau Tua | `#006041` | Default, kesan natural |
+| Coklat Kopi | `#6F4E37` | Coffee shop klasik |
+| Navy | `#1E3A5F` | Premium, profesional |
+| Merah Maroon | `#800020` | Elegan, hangat |
+| Ungu | `#5B2C6F` | Modern, unik |
+| Biru | `#1A5276` | Segar, trustworthy |
+| Hitam | `#1C1C1C` | Minimalis, luxury |
+| Terralogos | `#CC5500` | Hangat, energetic |
+
+### Yang Berubah Otomatis
+
+Saat warna utama diubah, semua elemen berikut ikut berubah secara dinamis:
+
+| Elemen | Contoh |
+|--------|--------|
+| Tombol utama | "Tambah ke Keranjang", "Konfirmasi Bayar" |
+| Harga | Rp 25.000 |
+| Badge status | "Menunggu", "Diproses" |
+| Link & teks highlight | Nama toko, link navigasi |
+| Background accent | Estimasi waktu, info card |
+| Shadow | Card elevation dengan warna brand |
+| Border focus | Input field focus ring |
+
+### Custom Hex Code
+
+Jika warna preset tidak cocok, input manual hex code:
+- Format: `#RRGGBB` (contoh: `#FF6B35`)
+- Gunakan [color picker online](https://colorpicker.me) untuk cari hex code
+- Pastikan kontras warna cukup terang agar teks putih tetap terbaca
+
+### Developer: Override Manual
+
+Jika perlu override warna secara manual di kode, edit `src/index.css`:
 
 ```css
---color-primary: oklch(0.45 0.15 160); /* Hijau tua */
+@theme {
+  --color-primary: #006041;
+  --color-primary-dark: #004D34;
+  --color-primary-light: #007A52;
+}
 ```
 
-Ganti dengan warna yang kamu inginkan. Contoh:
+> **Catatan:** Override manual di CSS akan ditimpa oleh warna yang disimpan di database. Untuk mengubah warna permanen, gunakan admin dashboard.
 
-```css
---color-primary: oklch(0.55 0.2 25); /* Merah-coklat */
---color-primary: oklch(0.5 0.15 280); /* Ungu */
---color-primary: oklch(0.45 0.12 30); /* Coklat kopi */
-```
+---
 
 ## Ganti Font
 
@@ -32,6 +80,8 @@ Contoh ganti ke font lain:
 --font-sans: 'Inter', sans-serif;
 ```
 
+---
+
 ## Tambah Menu
 
 Login sebagai admin, buka **Kelola Menu**, klik tombol **"+"** untuk tambah produk baru.
@@ -39,25 +89,46 @@ Login sebagai admin, buka **Kelola Menu**, klik tombol **"+"** untuk tambah prod
 ### Field Produk
 - **Nama:** Nama produk (contoh: "Cappuccino")
 - **Kategori:** Pilih atau buat kategori baru
-- **Harga:** Harga dasar (Regular)
-- **Harga Small:** Opsional, harga untuk ukuran Small
-- **Harga Large:** Opsional, harga untuk ukuran Large
+- **Harga:** Harga dasar (Regular Ice)
+- **Harga Large:** Opsional, harga untuk ukuran Large Ice (+Rp 7.000 otomatis ditampilkan)
 - **Foto:** Upload gambar produk (WebP recommended)
 - **Diskon:** Set diskon % (opsional, harga coret otomatis muncul)
+
+### Opsi Kustomisasi (Otomatis)
+Setiap produk minuman otomatis punya opsi:
+- **Ukuran Cup:** Regular Ice / Large Ice (+Rp 7.000)
+- **Sweetness:** Normal Sweet / Less Sweet
+- **Ice Cube:** Normal Ice / Less Ice / More Ice
+
+---
 
 ## Tambah Cabang
 
 Login sebagai admin, buka **Kelola Cabang**, tambah cabang baru.
 
+---
+
+## Ganti Logo
+
+Login sebagai admin, buka **Settings → Branding**, upload logo toko.
+
+> Logo akan muncul di header aplikasi.
+
+---
+
 ## Ganti QRIS Image
 
-Login sebagai admin, buka **Settings**, pilih **QRIS & WhatsApp**, upload gambar QRIS static baru.
+Login sebagai admin, buka **Settings → Branding**, upload gambar QRIS static baru.
+
+---
 
 ## Ganti Jam Operasional
 
 Login sebagai admin, buka **Settings**, atur jam buka dan tutup per hari.
 
 > Toko otomatis ditutup di luar jam operasional. Customer tetap bisa lihat menu tapi tidak bisa order.
+
+---
 
 ## Setup Telegram Notifikasi
 
@@ -74,6 +145,8 @@ npx supabase functions deploy confirm-payment --no-verify-jwt
 ```
 
 Setelah setup, admin akan mendapat notifikasi Telegram setiap kali pembayaran dikonfirmasi.
+
+---
 
 ## Tech Stack
 
