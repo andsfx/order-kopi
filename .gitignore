@@ -32,8 +32,15 @@ dist-ssr
 .opencode/
 .playwright-mcp/
 
+# Agent working data
+.sisyphus/
+
 # Supabase local
 supabase/.temp/
 
 # Local Netlify folder
 .netlify
+
+# Temp files
+temp_*.txt
+temp_*.sql
