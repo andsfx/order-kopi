@@ -177,8 +177,10 @@ export function OrderProvider({ children }) {
 
     return {
       id: orderId,
-      customer: customerInfo,
+      customer: { name: customerInfo.name, note: customerInfo.note || null },
       total: finalTotal,
+      amountToPay: amountToPay,
+      uniqueCode: uniqueCode,
       status: 'pending_payment',
       paymentMethod: customerInfo.paymentMethod || 'qris',
       createdAt: new Date().toISOString(),
